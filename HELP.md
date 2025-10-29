@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.lucashthiele.routine-evo-server' is invalid and this project uses 'com.lucashthiele.routine_evo_server' instead.
+* The original package name 'com.lucashthiele.routine-revo-server' is invalid and this project uses 'com.lucashthiele.routine_revo_server' instead.
 
 # Getting Started
 
