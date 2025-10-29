@@ -1,13 +1,13 @@
-package com.lucashthiele.routine_evo_server;
+package com.lucashthiele.routine_revo_server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class RoutineEvoServerApplication {
+public class RoutineRevoServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(RoutineEvoServerApplication.class, args);
+		SpringApplication.run(RoutineRevoServerApplication.class, args);
 	}
 
 }
