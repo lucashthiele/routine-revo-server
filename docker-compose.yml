@@ -1,0 +1,10 @@
+services:
+  postgres:
+    container_name: routine_evo_pg
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=routine_evo_db'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - "5432:5432"
