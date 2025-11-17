@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface UserGateway {
   Optional<User> findByEmail(String email);
+  void updatePasswordByEmail(String email, String hashedPassword);
 }

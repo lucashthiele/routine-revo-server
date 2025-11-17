@@ -24,7 +24,7 @@ public class AuthController {
   
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
-    AuthInput input = new AuthInput(request.getEmail(), request.getPassword());
+    AuthInput input = new AuthInput(request.email(), request.password());
 
     AuthOutput output = authenticateUserUseCase.execute(input);
     

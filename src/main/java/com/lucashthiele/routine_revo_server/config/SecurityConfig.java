@@ -21,7 +21,7 @@ import java.util.List;
 public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
+    return new BCryptPasswordEncoder(10);
   }
   
   @Bean
@@ -55,6 +55,7 @@ public class SecurityConfig {
         // Allow only login route to be called without Authorization
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/api/v1/auth/login").permitAll()
+            .requestMatchers("/api/v1/password-reset/**").permitAll()
             .anyRequest().authenticated()
         );
     

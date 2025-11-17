@@ -23,4 +23,9 @@ public class UserGatewayImpl implements UserGateway {
     
     return userDataOptional.map(userDataMapper::toDomain);
   }
+
+  @Override
+  public void updatePasswordByEmail(String email, String hashedPassword) {
+      userRepository.updatePasswordByEmail(email, hashedPassword);
+  }
 }

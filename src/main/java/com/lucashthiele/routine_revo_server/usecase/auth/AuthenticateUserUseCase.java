@@ -2,7 +2,7 @@ package com.lucashthiele.routine_revo_server.usecase.auth;
 
 import com.lucashthiele.routine_revo_server.domain.user.Status;
 import com.lucashthiele.routine_revo_server.domain.user.User;
-import com.lucashthiele.routine_revo_server.infrastructure.security.JwtTokenProvider;
+import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovider.AuthTokenProvider;
 import com.lucashthiele.routine_revo_server.usecase.auth.exception.InvalidCredentialsException;
 import com.lucashthiele.routine_revo_server.usecase.auth.input.AuthInput;
 import com.lucashthiele.routine_revo_server.usecase.auth.output.AuthOutput;
@@ -16,14 +16,14 @@ public class AuthenticateUserUseCase {
   
   private final UserGateway userGateway;
   private final PasswordEncoder passwordEncoder;
-  private final JwtTokenProvider jwtTokenProvider;
+  private final AuthTokenProvider jwtTokenProvider;
 
   private static final String ERROR_MESSAGE = "Invalid email or password combination.";
 
   public AuthenticateUserUseCase(
       UserGateway userGateway,
       PasswordEncoder passwordEncoder,
-      JwtTokenProvider jwtTokenProvider
+      AuthTokenProvider jwtTokenProvider
   ) {
     this.userGateway = userGateway;
     this.passwordEncoder = passwordEncoder;
