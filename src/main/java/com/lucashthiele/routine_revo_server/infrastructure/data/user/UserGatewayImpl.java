@@ -1,7 +1,7 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 
 import com.lucashthiele.routine_revo_server.domain.user.User;
-import com.lucashthiele.routine_revo_server.usecase.auth.UserGateway;
+import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

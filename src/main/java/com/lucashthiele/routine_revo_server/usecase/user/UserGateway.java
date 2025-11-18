@@ -1,4 +1,4 @@
-package com.lucashthiele.routine_revo_server.usecase.auth;
+package com.lucashthiele.routine_revo_server.usecase.user;
 
 import com.lucashthiele.routine_revo_server.domain.user.User;
 
