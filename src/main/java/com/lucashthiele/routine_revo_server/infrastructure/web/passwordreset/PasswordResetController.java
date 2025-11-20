@@ -1,8 +1,11 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.passwordreset;
 
+import com.lucashthiele.routine_revo_server.infrastructure.web.passwordreset.dto.RequestPasswordResetRequest;
 import com.lucashthiele.routine_revo_server.infrastructure.web.passwordreset.dto.ResetPasswordRequest;
+import com.lucashthiele.routine_revo_server.usecase.passwordreset.RequestPasswordResetUseCase;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.ResetPasswordUseCase;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
+import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.RequestPasswordResetInput;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.ResetPasswordInput;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -14,9 +17,20 @@ import org.springframework.web.bind.annotation.*;
 public class PasswordResetController {
   
   private final ResetPasswordUseCase resetPasswordUseCase;
+  private final RequestPasswordResetUseCase requestPasswordResetUseCase;
 
-  public PasswordResetController(ResetPasswordUseCase resetPasswordUseCase) {
+  public PasswordResetController(ResetPasswordUseCase resetPasswordUseCase, RequestPasswordResetUseCase requestPasswordResetUseCase) {
     this.resetPasswordUseCase = resetPasswordUseCase;
+    this.requestPasswordResetUseCase = requestPasswordResetUseCase;
+  }
+  
+  @PostMapping("/request")
+  public ResponseEntity<Void> requestReset(@Valid @RequestBody RequestPasswordResetRequest request) {
+    RequestPasswordResetInput input = new RequestPasswordResetInput(request.email());
+    
+    requestPasswordResetUseCase.execute(input);
+    
+    return ResponseEntity.ok().build();
   }
   
   @PostMapping("/new-password")

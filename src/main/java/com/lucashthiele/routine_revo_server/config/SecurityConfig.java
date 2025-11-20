@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -19,6 +20,10 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+  
+  @Value("${app.frontend.url}")
+  private String frontendUrl;
+  
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder(10);
@@ -29,7 +34,7 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     
     configuration.setAllowedOrigins(List.of(
-        "http://localhost:5173"
+        frontendUrl
     ));
     
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

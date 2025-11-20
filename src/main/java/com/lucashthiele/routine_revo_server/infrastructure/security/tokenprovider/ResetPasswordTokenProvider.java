@@ -11,13 +11,11 @@ public class ResetPasswordTokenProvider {
   
   private final JwtTokenProvider jwtTokenProvider;
   
-  @Value("${jwt.password-reset-secret}")
-  private String passwordResetSecret;
-
   @Value("${jwt.password-reset-expiration-ms}")
   private long resetPasswordExpiration;
 
-  public ResetPasswordTokenProvider(JwtTokenProvider jwtTokenProvider) {
+  public ResetPasswordTokenProvider(JwtTokenProvider jwtTokenProvider,
+                                    @Value("${jwt.password-reset-secret}") String passwordResetSecret) {
     jwtTokenProvider.setPurpose(TokenProviderPurposeType.RESET_PASSWORD);
     jwtTokenProvider.setSecret(passwordResetSecret);
     this.jwtTokenProvider = jwtTokenProvider;
