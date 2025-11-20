@@ -6,7 +6,7 @@ import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovide
 import com.lucashthiele.routine_revo_server.usecase.auth.exception.InvalidCredentialsException;
 import com.lucashthiele.routine_revo_server.usecase.auth.input.AuthInput;
 import com.lucashthiele.routine_revo_server.usecase.auth.output.AuthOutput;
-import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
+import com.lucashthiele.routine_revo_server.gateway.UserGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;

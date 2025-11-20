@@ -9,16 +9,14 @@ public class AuthTokenProvider {
   
   private final JwtTokenProvider jwtTokenProvider;
   
-  @Value("${jwt.secret}")
-  private String jwtSecret;
-
   @Value("${jwt.auth-token-expiration-ms}")
   private long authTokenExpirationMs;
 
   @Value("${jwt.refresh-token-expiration-ms}")
   private long refreshTokenExpirationMs;
 
-  public AuthTokenProvider(JwtTokenProvider jwtTokenProvider) {
+  public AuthTokenProvider(JwtTokenProvider jwtTokenProvider,
+                           @Value("${jwt.secret}") String jwtSecret) {
     jwtTokenProvider.setPurpose(TokenProviderPurposeType.AUTHENTICATION);
     jwtTokenProvider.setSecret(jwtSecret);
     this.jwtTokenProvider = jwtTokenProvider;

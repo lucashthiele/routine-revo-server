@@ -2,7 +2,8 @@ package com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovid
 
 public enum TokenProviderPurposeType {
   AUTHENTICATION("authentication"),
-  RESET_PASSWORD("reset-password");
+  RESET_PASSWORD("reset-password"),
+  ONBOARDING("onboarding");
   
   private final String purposeValue;
 

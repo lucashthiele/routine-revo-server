@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Criação da Conta</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        
+        .header {
+            color: #FA1768; 
+            text-align: center; 
+        }
+        
+        .content { 
+            color: #333333; 
+            line-height: 1.6; 
+        }
+        
+        .button { 
+            display: inline-block; 
+            background-color: #FA1768; 
+            color: #ffffff; 
+            padding: 12px 24px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            margin-top: 20px; 
+            cursor: pointer;
+        }
+        
+        button > a {
+            text-decoration: none;
+        }
+        
+        
+        .footer { 
+            margin-top: 30px; 
+            font-size: 12px; 
+            color: #999999; 
+            text-align: center; 
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="header">Routine Revo</h2>
+
+    <div class="content">
+        <p>Olá <strong th:text="${firstName}">Usuário</strong>,</p>
+
+        <p>Bem vindo ao Routine Revo, o aplicativo que irá revolucionar suas rotinas de treinamento.</p>
+        
+        <p>Recebemos a solicitação de criação de sua conta. Você tem <strong>3 dias</strong> para finalizar a criação.</p>
+
+        <p>Clique no botão abaixo para finalizar seu cadastro:</p>
+
+        <div style="text-align: center;">
+            <a th:href="${resetLink}" class="button">Criar Conta</a>
+        </div>
+
+        <p style="margin-top: 20px; font-size: 14px;">
+            Se você não fez essa solicitação, por favor ignore este e-mail. <br>
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Routine Revo. Todos os direitos reservados.</p>
+    </div>
+</div>
+</body>
+</html>

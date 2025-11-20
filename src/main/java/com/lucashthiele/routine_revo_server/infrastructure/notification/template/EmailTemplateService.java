@@ -42,10 +42,30 @@ public class EmailTemplateService {
     return html;
   }
 
+  public String generateOnboardingHtml(String username, String onboardingToken) {
+    LOGGER.debug("Generating onboarding email template for user: {}", username);
+
+    var firstName = this.extractFirstName(username);
+    var link = String.format("%s/onboarding?token=%s", frontendUrl, onboardingToken);
+
+    Map<String, Object> variables = Map.of(
+        "firstName", firstName,
+        "onboardingLink", link
+    );
+
+    Context context = new Context();
+    context.setVariables(variables);
+
+    String html = templateEngine.process("onboarding", context);
+
+    LOGGER.debug("Onboarding email template generated successfully");
+    return html;
+  }
+  
   private String extractFirstName(String username) {
     if (username.contains(" "))
       return username.split(" ")[0];
-  
+
     return username;
   }
 }

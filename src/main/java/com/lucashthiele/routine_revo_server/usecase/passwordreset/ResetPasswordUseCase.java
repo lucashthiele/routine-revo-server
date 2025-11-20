@@ -1,7 +1,7 @@
 package com.lucashthiele.routine_revo_server.usecase.passwordreset;
 
 import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovider.ResetPasswordTokenProvider;
-import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
+import com.lucashthiele.routine_revo_server.gateway.UserGateway;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.ResetPasswordInput;
 import jakarta.validation.Valid;

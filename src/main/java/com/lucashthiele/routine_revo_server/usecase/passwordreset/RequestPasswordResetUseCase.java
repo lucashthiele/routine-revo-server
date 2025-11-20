@@ -3,9 +3,10 @@ package com.lucashthiele.routine_revo_server.usecase.passwordreset;
 import com.lucashthiele.routine_revo_server.domain.user.Status;
 import com.lucashthiele.routine_revo_server.domain.user.User;
 import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovider.ResetPasswordTokenProvider;
-import com.lucashthiele.routine_revo_server.usecase.notification.EmailGateway;
+import com.lucashthiele.routine_revo_server.gateway.EmailGateway;
+import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.RequestPasswordResetInput;
-import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
+import com.lucashthiele.routine_revo_server.gateway.UserGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class RequestPasswordResetUseCase {
+public class RequestPasswordResetUseCase implements UseCaseInterface<Void, RequestPasswordResetInput> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RequestPasswordResetUseCase.class);
   
   private final UserGateway userGateway;
@@ -28,12 +29,12 @@ public class RequestPasswordResetUseCase {
     this.emailGateway = emailGateway;
   }
   
-  public void execute(RequestPasswordResetInput input) {
+  public Void execute(RequestPasswordResetInput input) {
     LOGGER.info("Password reset requested for email: {}", input.email());
     
     if (input.email() == null || input.email().isBlank()) {
       LOGGER.warn("Password reset request failed - Empty email provided");
-      return;
+      return null;
     }
 
     Optional<User> userOptional = userGateway.findByEmail(input.email());
@@ -52,5 +53,7 @@ public class RequestPasswordResetUseCase {
     } else {
       LOGGER.info("Password reset requested for non-existent email: {}", input.email());
     }
+    
+    return null;
   }
 }

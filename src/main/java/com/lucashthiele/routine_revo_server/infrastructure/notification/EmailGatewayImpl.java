@@ -3,7 +3,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.notification;
 import com.lucashthiele.routine_revo_server.domain.user.User;
 import com.lucashthiele.routine_revo_server.infrastructure.notification.common.EmailSender;
 import com.lucashthiele.routine_revo_server.infrastructure.notification.template.EmailTemplateService;
-import com.lucashthiele.routine_revo_server.usecase.notification.EmailGateway;
+import com.lucashthiele.routine_revo_server.gateway.EmailGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,5 +31,19 @@ public class EmailGatewayImpl implements EmailGateway {
     emailSender.send(user.getEmail(), subject, htmlBody);
     
     LOGGER.info("Password reset email queued for user: {}", user.getEmail());
+  }
+
+  @Override
+  public void sendOnboardingEmail(User user, String onboardingToken) {
+    LOGGER.info("Preparing onboarding email for user: {}", user.getEmail());
+
+    String subject = "Bem vindo ao Routine Revo!";
+
+    String htmlBody = emailTemplateService.generateOnboardingHtml(user.getName(), onboardingToken);
+
+    emailSender.send(user.getEmail(), subject, htmlBody);
+
+    LOGGER.info("Onboarding email queued for user: {}", user.getEmail());
+    
   }
 }
