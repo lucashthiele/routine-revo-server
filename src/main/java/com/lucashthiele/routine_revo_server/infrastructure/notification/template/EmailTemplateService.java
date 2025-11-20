@@ -1,5 +1,7 @@
 package com.lucashthiele.routine_revo_server.infrastructure.notification.template;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -9,6 +11,7 @@ import java.util.Map;
 
 @Service
 public class EmailTemplateService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(EmailTemplateService.class);
   
   private final SpringTemplateEngine templateEngine;
   
@@ -20,6 +23,8 @@ public class EmailTemplateService {
   }
   
   public String generatePasswordResetHtml(String username, String token) {
+    LOGGER.debug("Generating password reset email template for user: {}", username);
+    
     var firstName = this.extractFirstName(username);
     var link = String.format("%s/reset-password?token=%s", frontendUrl, token);
 
@@ -31,7 +36,10 @@ public class EmailTemplateService {
     Context context = new Context();
     context.setVariables(variables);
 
-    return templateEngine.process("password-reset", context);
+    String html = templateEngine.process("password-reset", context);
+    
+    LOGGER.debug("Password reset email template generated successfully");
+    return html;
   }
 
   private String extractFirstName(String username) {

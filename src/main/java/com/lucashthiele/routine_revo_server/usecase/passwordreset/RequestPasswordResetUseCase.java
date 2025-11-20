@@ -6,12 +6,15 @@ import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovide
 import com.lucashthiele.routine_revo_server.usecase.notification.EmailGateway;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.RequestPasswordResetInput;
 import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 public class RequestPasswordResetUseCase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RequestPasswordResetUseCase.class);
   
   private final UserGateway userGateway;
   private final ResetPasswordTokenProvider jwtTokenProvider;
@@ -26,7 +29,10 @@ public class RequestPasswordResetUseCase {
   }
   
   public void execute(RequestPasswordResetInput input) {
+    LOGGER.info("Password reset requested for email: {}", input.email());
+    
     if (input.email() == null || input.email().isBlank()) {
+      LOGGER.warn("Password reset request failed - Empty email provided");
       return;
     }
 
@@ -39,7 +45,12 @@ public class RequestPasswordResetUseCase {
         String resetToken = jwtTokenProvider.generateToken(user);
 
         emailGateway.sendPasswordResetEmail(user, resetToken);
+        LOGGER.info("Password reset email initiated for user: {}", input.email());
+      } else {
+        LOGGER.warn("Password reset request for inactive user: {}", input.email());
       }
+    } else {
+      LOGGER.info("Password reset requested for non-existent email: {}", input.email());
     }
   }
 }

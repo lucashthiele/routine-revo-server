@@ -7,6 +7,8 @@ import com.lucashthiele.routine_revo_server.usecase.auth.exception.InvalidCreden
 import com.lucashthiele.routine_revo_server.usecase.auth.input.AuthInput;
 import com.lucashthiele.routine_revo_server.usecase.auth.output.AuthOutput;
 import com.lucashthiele.routine_revo_server.usecase.user.UserGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @Service
 public class AuthenticateUserUseCase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticateUserUseCase.class);
   
   private final UserGateway userGateway;
   private final PasswordEncoder passwordEncoder;
@@ -32,6 +35,8 @@ public class AuthenticateUserUseCase {
   }
   
   public AuthOutput execute(AuthInput input) {
+    LOGGER.info("Authentication attempt for email: {}", input.email());
+    
     validateInput(input);
 
     // Get user from db
@@ -40,15 +45,20 @@ public class AuthenticateUserUseCase {
     // Validate password
     User user = userOptional
         .filter(u -> passwordEncoder.matches(input.password(), u.getPassword()))
-        .orElseThrow(() -> new InvalidCredentialsException(ERROR_MESSAGE));
+        .orElseThrow(() -> {
+          LOGGER.warn("Failed authentication attempt for email: {} - Invalid credentials", input.email());
+          return new InvalidCredentialsException(ERROR_MESSAGE);
+        });
     
     if (user.getStatus() != Status.ACTIVE) {
+      LOGGER.warn("Failed authentication attempt for email: {} - User status is not ACTIVE", input.email());
       throw new InvalidCredentialsException(ERROR_MESSAGE);
     }
     
     String authToken = jwtTokenProvider.generateAuthToken(user);
     String refreshToken = jwtTokenProvider.generateRefreshToken(user);
     
+    LOGGER.info("User authenticated successfully: {}", input.email());
     return new AuthOutput(authToken, refreshToken);
   }
   

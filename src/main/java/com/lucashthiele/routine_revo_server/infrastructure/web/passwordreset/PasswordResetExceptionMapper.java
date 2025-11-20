@@ -1,6 +1,8 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.passwordreset;
 
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,10 +15,12 @@ import java.util.Map;
 
 @ControllerAdvice
 public class PasswordResetExceptionMapper {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PasswordResetExceptionMapper.class);
   
   @ExceptionHandler(InvalidResetTokenException.class)
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public ResponseEntity<Map<String, String>> handleInvalidResetToken(InvalidResetTokenException invalidResetTokenException) {
+    LOGGER.error("Invalid reset token error: {}", invalidResetTokenException.getMessage());
     Map<String, String> errorBody = Map.of("error", invalidResetTokenException.getMessage());
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
   }
@@ -24,6 +28,7 @@ public class PasswordResetExceptionMapper {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<Map<String, String>> handleInvalidData(MethodArgumentNotValidException methodArgumentNotValidException) {
+    LOGGER.error("Validation error in password reset request: {}", methodArgumentNotValidException.getMessage());
     Map<String, String> errors = new HashMap<>();
     methodArgumentNotValidException.getBindingResult().getFieldErrors().forEach(error -> 
         errors.put(error.getField(), error.getDefaultMessage()));
