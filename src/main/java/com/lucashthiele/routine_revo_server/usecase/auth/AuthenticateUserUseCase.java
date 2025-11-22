@@ -22,7 +22,7 @@ public class AuthenticateUserUseCase {
   private final PasswordEncoder passwordEncoder;
   private final AuthTokenProvider jwtTokenProvider;
 
-  private static final String ERROR_MESSAGE = "Invalid email or password combination.";
+  private static final String ERROR_MESSAGE = "E-mail ou senha inválidos. Tente novamente.";
 
   public AuthenticateUserUseCase(
       UserGateway userGateway,
