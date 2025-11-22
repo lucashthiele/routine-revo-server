@@ -2,9 +2,12 @@ package com.lucashthiele.routine_revo_server.infrastructure.web.onboarding;
 
 import com.lucashthiele.routine_revo_server.domain.user.User;
 import com.lucashthiele.routine_revo_server.gateway.UserGateway;
+import com.lucashthiele.routine_revo_server.infrastructure.web.onboarding.dto.ActivateAccountOnboardingRequest;
 import com.lucashthiele.routine_revo_server.infrastructure.web.onboarding.dto.RequestOnboardingRequest;
+import com.lucashthiele.routine_revo_server.usecase.onboarding.ActivateUserOnboardingUseCase;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.RequestOnboardingUseCase;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.ValidateOnboardingUseCase;
+import com.lucashthiele.routine_revo_server.usecase.onboarding.input.ActivateUserOnboardingInput;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.input.RequestOnboardingInput;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.input.ValidateOnboardingInput;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
@@ -22,14 +25,17 @@ public class OnboardingController {
   
   private final RequestOnboardingUseCase requestOnboardingUseCase;
   private final ValidateOnboardingUseCase validateOnboardingUseCase;
+  private final ActivateUserOnboardingUseCase activateUserOnboardingUseCase;
   private final UserGateway userGateway;
 
   public OnboardingController(RequestOnboardingUseCase requestOnboardingUseCase,
                               UserGateway userGateway,
-                              ValidateOnboardingUseCase validateOnboardingUseCase) {
+                              ValidateOnboardingUseCase validateOnboardingUseCase,
+                              ActivateUserOnboardingUseCase activateUserOnboardingUseCase) {
     this.userGateway = userGateway;
     this.requestOnboardingUseCase = requestOnboardingUseCase;
     this.validateOnboardingUseCase = validateOnboardingUseCase;
+    this.activateUserOnboardingUseCase = activateUserOnboardingUseCase;
   }
   
   // TODO - This will be removed, since the onboarding use case is called when the user is created by the admin
@@ -58,6 +64,21 @@ public class OnboardingController {
     validateOnboardingUseCase.execute(input);
 
     LOGGER.info("POST /api/v1/onboarding/validate-onboarding - Token validation successful");
+    return ResponseEntity.ok().build();
+  }
+  
+  @PostMapping("/activate-account")
+  public ResponseEntity<Void> activateAccount(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                              @RequestBody ActivateAccountOnboardingRequest request) {
+    LOGGER.info("POST /api/v1/onboarding/activate-account - Account activation received");
+
+    String token = extractTokenFromHeader(authorizationHeader);
+
+    ActivateUserOnboardingInput input = new ActivateUserOnboardingInput(token, request.password());
+
+    activateUserOnboardingUseCase.execute(input);
+
+    LOGGER.info("POST /api/v1/onboarding/activate-account - Account activation successful");
     return ResponseEntity.ok().build();
   }
   

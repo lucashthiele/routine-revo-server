@@ -1,6 +1,7 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.onboarding;
 
 import com.lucashthiele.routine_revo_server.usecase.onboarding.exception.InvalidOnboardingTokenException;
+import com.lucashthiele.routine_revo_server.usecase.onboarding.exception.UserNotFoundException;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,22 @@ public class OnboardingExceptionMapper {
     Map<String, String> errorBody = Map.of("error", invalidOnboardingTokenException.getMessage());
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
   }
-  
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<Map<String, String>> handleInvalidData(MethodArgumentNotValidException methodArgumentNotValidException) {
     LOGGER.error("Validation error in onboarding request: {}", methodArgumentNotValidException.getMessage());
     Map<String, String> errors = new HashMap<>();
-    methodArgumentNotValidException.getBindingResult().getFieldErrors().forEach(error -> 
+    methodArgumentNotValidException.getBindingResult().getFieldErrors().forEach(error ->
         errors.put(error.getField(), error.getDefaultMessage()));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+  }
+
+  @ExceptionHandler(UserNotFoundException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException userNotFoundException) {
+    LOGGER.error("User with status PENDING not found error: {}", userNotFoundException.getMessage());
+    Map<String, String> errorBody = Map.of("error", userNotFoundException.getMessage());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
   }
 }

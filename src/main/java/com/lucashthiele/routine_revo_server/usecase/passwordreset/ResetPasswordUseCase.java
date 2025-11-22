@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.usecase.passwordreset;
 
 import com.lucashthiele.routine_revo_server.infrastructure.security.tokenprovider.ResetPasswordTokenProvider;
 import com.lucashthiele.routine_revo_server.gateway.UserGateway;
+import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.input.ResetPasswordInput;
 import jakarta.validation.Valid;
@@ -11,13 +12,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ResetPasswordUseCase {
+public class ResetPasswordUseCase implements UseCaseInterface<Void, ResetPasswordInput> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResetPasswordUseCase.class);
   
   private final ResetPasswordTokenProvider resetPasswordTokenProvider;
   private final PasswordEncoder passwordEncoder;
   private final UserGateway userGateway;
-  
   
   public ResetPasswordUseCase(ResetPasswordTokenProvider resetPasswordTokenProvider,
                               PasswordEncoder passwordEncoder,
@@ -27,7 +27,7 @@ public class ResetPasswordUseCase {
     this.userGateway = userGateway;
   }
   
-  public void execute(@Valid ResetPasswordInput input) {
+  public Void execute(@Valid ResetPasswordInput input) {
     LOGGER.info("Password reset attempt with token");
     
     String email = resetPasswordTokenProvider.validateToken(input.token())
@@ -41,5 +41,7 @@ public class ResetPasswordUseCase {
     userGateway.updatePasswordByEmail(email, hashedPassword);
     
     LOGGER.info("Password successfully reset for user: {}", email);
+    
+    return null;
   }
 }

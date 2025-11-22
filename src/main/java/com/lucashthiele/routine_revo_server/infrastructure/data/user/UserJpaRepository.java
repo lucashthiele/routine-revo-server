@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 
+import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,5 +20,11 @@ public interface UserJpaRepository extends JpaRepository<UserData, UUID> {
   @Query("UPDATE UserData u SET u.hashedPassword = :newHashedPassword WHERE u.email = :email")
   void updatePasswordByEmail(@Param("email") String email,
                              @Param("newHashedPassword") String newHashedPassword);
+
+  Optional<UserData> findByEmailAndStatus(String email, StatusData status);
   
+  @Modifying
+  @Transactional
+  @Query("UPDATE UserData u SET u.hashedPassword = :hashedPassword, u.status = 'ACTIVE' WHERE u.email = :email")
+  void updatePasswordAndActivateByEmail(@Param("email") String email,  @Param("hashedPassword") String hashedPassword);
 }

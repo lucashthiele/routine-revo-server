@@ -1,10 +1,13 @@
 package com.lucashthiele.routine_revo_server.gateway;
 
 import com.lucashthiele.routine_revo_server.domain.user.User;
+import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 
 import java.util.Optional;
 
 public interface UserGateway {
   Optional<User> findByEmail(String email);
   void updatePasswordByEmail(String email, String hashedPassword);
+  void activateUserAccountByEmail(String email, String hashedPassword);
+  Optional<User> findUserByEmailAndStatus(String email, StatusData status);
 }
