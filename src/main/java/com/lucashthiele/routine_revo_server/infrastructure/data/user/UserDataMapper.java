@@ -27,6 +27,18 @@ public class UserDataMapper {
   public UserData toData(User user) {
     if (user == null) return null;
     
+    if (user.getStatus() == null) {
+      throw new IllegalArgumentException(
+          "User status cannot be null. User: " + user.getEmail()
+      );
+    }
+    
+    if (user.getRole() == null) {
+      throw new IllegalArgumentException(
+          "User role cannot be null. User: " + user.getEmail()
+      );
+    }
+    
     UserData userData = new UserData();userData.setId(user.getId());
     userData.setName(user.getName());
     userData.setEmail(user.getEmail());

@@ -1,6 +1,7 @@
 package com.lucashthiele.routine_revo_server.usecase.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lucashthiele.routine_revo_server.domain.user.Status;
 import com.lucashthiele.routine_revo_server.domain.user.User;
 import com.lucashthiele.routine_revo_server.gateway.UserGateway;
 import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
@@ -33,6 +34,7 @@ public class CreateUserUseCase implements UseCaseInterface<UUID, CreateUserInput
         .name(input.name())
         .email(input.email())
         .role(input.role())
+        .status(Status.PENDING)
         .build();
 
     try {

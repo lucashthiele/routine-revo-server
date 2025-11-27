@@ -62,9 +62,16 @@ public class UserGatewayImpl implements UserGateway {
   @Override
   public UUID createUser(User user) throws JsonProcessingException {
     UserData userData = userDataMapper.toData(user);
-    LOGGER.info("Creating user: {}", userData.toJson());
+    
+    // Generate UUID if not already set
+    if (userData.getId() == null) {
+      userData.setId(UUID.randomUUID());
+      LOGGER.debug("Generated new UUID for user: {}", userData.getId());
+    }
+    
+    LOGGER.info("Creating user with email: {} and role: {}", userData.getEmail(), userData.getRole());
     UserData createdUser = userRepository.save(userData);
-    LOGGER.info("User created: {}", createdUser.toJson());
+    LOGGER.info("User created successfully with ID: {}", createdUser.getId());
     
     return createdUser.getId();
   }

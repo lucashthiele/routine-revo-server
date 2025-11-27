@@ -3,6 +3,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.RoleData;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 import jakarta.persistence.*;
@@ -37,7 +38,7 @@ public class UserData {
   )
   private UserData coach;
   @Column(name = "workout_per_week")
-  private int workoutPerWeek;
+  private Integer workoutPerWeek;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, columnDefinition = "user_status")
@@ -55,8 +56,22 @@ public class UserData {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
+  @PrePersist
+  protected void onCreate() {
+    LocalDateTime now = LocalDateTime.now();
+    createdAt = now;
+    updatedAt = now;
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    updatedAt = LocalDateTime.now();
+  }
+
   public String toJson() throws JsonProcessingException {
-    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    ObjectWriter ow = mapper.writer().withDefaultPrettyPrinter();
     return ow.writeValueAsString(this);
   }
 }

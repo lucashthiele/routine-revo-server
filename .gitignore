@@ -15,6 +15,7 @@ logs/
 # Build tool generated directories
 ## Maven
 target/
+.mvn/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

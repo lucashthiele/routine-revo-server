@@ -4,23 +4,25 @@ import com.lucashthiele.routine_revo_server.domain.user.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-@Component
 public class JwtTokenProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenProvider.class);
   
-  @Setter
-  private String secret;
-  @Setter
-  private TokenProviderPurposeType purpose;
+  private final String secret;
+  private final TokenProviderPurposeType purpose;
+  
+  public JwtTokenProvider(String secret, TokenProviderPurposeType purpose) {
+    this.secret = secret;
+    this.purpose = purpose;
+    LOGGER.info("JwtTokenProvider created for purpose: {} with secret length: {}", 
+        purpose.value(), secret != null ? secret.length() : 0);
+  }
 
   String generateToken(User user, long expirationMs) {
     LOGGER.debug("Generating {} token for user: {}", purpose.value(), user.getEmail());
@@ -46,7 +48,7 @@ public class JwtTokenProvider {
   
   
   public Optional<String> validateToken(String token) {
-    LOGGER.debug("Validating token");
+    LOGGER.info("JwtTokenProvider - Validating token with expected purpose: {}", this.purpose.value());
     
     try {
       Claims claims = Jwts.parser()
@@ -55,16 +57,25 @@ public class JwtTokenProvider {
           .parseSignedClaims(token)
           .getPayload();
       
-      String purpose = claims.get("purpose", String.class);
-      if (!TokenProviderPurposeType.RESET_PASSWORD.value().equals(purpose)) {
-        LOGGER.debug("Token validation failed - Invalid token purpose");
+      LOGGER.info("JwtTokenProvider - Token parsed successfully");
+      LOGGER.info("JwtTokenProvider - Subject (email): {}", claims.getSubject());
+      LOGGER.info("JwtTokenProvider - Issued at: {}", claims.getIssuedAt());
+      LOGGER.info("JwtTokenProvider - Expiration: {}", claims.getExpiration());
+      
+      String tokenPurpose = claims.get("purpose", String.class);
+      LOGGER.info("JwtTokenProvider - Token purpose: {}", tokenPurpose);
+      
+      if (!this.purpose.value().equals(tokenPurpose)) {
+        LOGGER.warn("JwtTokenProvider - Token validation failed - Invalid token purpose. Expected: {}, Got: {}", 
+            this.purpose.value(), tokenPurpose);
         return Optional.empty();
       }
       
-      LOGGER.debug("Token validated successfully for user: {}", claims.getSubject());
+      LOGGER.info("JwtTokenProvider - Token validated successfully for user: {}", claims.getSubject());
       return Optional.of(claims.getSubject());
     } catch (Exception e) {
-      LOGGER.debug("Token validation failed - Exception: {}", e.getMessage());
+      LOGGER.error("JwtTokenProvider - Token validation failed - Exception: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+      LOGGER.debug("JwtTokenProvider - Full exception trace", e);
       return Optional.empty();
     }
   }

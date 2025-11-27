@@ -13,7 +13,7 @@ public class User {
   private final Role role;
   private final Status status;
   private final UUID coachId;
-  private final int workoutPerWeek;
+  private final Integer workoutPerWeek;
   
   
   private User(Builder builder) {
@@ -39,7 +39,7 @@ public class User {
     private Role role;
     private Status status;
     private UUID coachId;
-    private int workoutPerWeek;
+    private Integer workoutPerWeek;
 
     public Builder id(UUID id) {
       this.id = id;
@@ -70,7 +70,7 @@ public class User {
       this.status = status;
       return this;
     }
-    public Builder workoutPerWeek(int workoutPerWeek) {
+    public Builder workoutPerWeek(Integer workoutPerWeek) {
       this.workoutPerWeek = workoutPerWeek;
       return this;
     }
