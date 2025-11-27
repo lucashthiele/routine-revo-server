@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.lucashthiele.routine_revo_server.domain.user.User;
 import com.lucashthiele.routine_revo_server.gateway.UserGateway;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class UserGatewayImpl implements UserGateway {
@@ -55,5 +57,22 @@ public class UserGatewayImpl implements UserGateway {
     Optional<UserData> userDataOptional = userRepository.findByEmailAndStatus(email, status);
     
     return userDataOptional.map(userDataMapper::toDomain);
+  }
+
+  @Override
+  public UUID createUser(User user) throws JsonProcessingException {
+    UserData userData = userDataMapper.toData(user);
+    LOGGER.info("Creating user: {}", userData.toJson());
+    UserData createdUser = userRepository.save(userData);
+    LOGGER.info("User created: {}", createdUser.toJson());
+    
+    return createdUser.getId();
+  }
+
+  @Override
+  public void linkCoach(UUID coachId, UUID userId) {
+    LOGGER.info("Linking coach ({}) to user ({})", coachId, userId);
+    userRepository.updateCoachIdById(coachId, userId);
+    LOGGER.info("Coach linked to user successfully");
   }
 }

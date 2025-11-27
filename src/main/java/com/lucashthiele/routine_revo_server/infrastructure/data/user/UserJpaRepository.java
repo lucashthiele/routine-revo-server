@@ -25,6 +25,17 @@ public interface UserJpaRepository extends JpaRepository<UserData, UUID> {
   
   @Modifying
   @Transactional
-  @Query("UPDATE UserData u SET u.hashedPassword = :hashedPassword, u.status = 'ACTIVE' WHERE u.email = :email")
-  void updatePasswordAndActivateByEmail(@Param("email") String email,  @Param("hashedPassword") String hashedPassword);
+  @Query("""
+      UPDATE UserData u\s
+      SET u.hashedPassword = :hashedPassword,
+          u.status = 'ACTIVE'\s
+      WHERE u.email = :email""")
+  void updatePasswordAndActivateByEmail(@Param("email") String email,
+                                        @Param("hashedPassword") String hashedPassword);
+
+  @Modifying
+  @Transactional
+  @Query(value = "UPDATE users SET coach_id = :coachId WHERE id = :userId", nativeQuery = true)
+  void updateCoachIdById(@Param("coachId") UUID coachId,
+                         @Param("userId") UUID userId);
 }

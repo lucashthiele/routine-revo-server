@@ -13,14 +13,15 @@ public class UserDataMapper {
   public User toDomain(UserData userData) {
     if (userData == null) return null;
     
-    return new User(
-        userData.getId(),
-        userData.getName(),
-        userData.getEmail(),
-        userData.getHashedPassword(),
-        Role.valueOf(userData.getRole().name()),
-        Status.valueOf(userData.getStatus().name())
-    );
+    return User.builder()
+        .id(userData.getId())
+        .name(userData.getName())
+        .email(userData.getEmail())
+        .password(userData.getHashedPassword())
+        .role(Role.valueOf(userData.getRole().name()))
+        .status(Status.valueOf(userData.getStatus().name()))
+        .workoutPerWeek(userData.getWorkoutPerWeek())
+        .build();
   }
   
   public UserData toData(User user) {

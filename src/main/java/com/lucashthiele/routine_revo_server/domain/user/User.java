@@ -1,45 +1,86 @@
 package com.lucashthiele.routine_revo_server.domain.user;
 
+import lombok.Getter;
+
 import java.util.UUID;
 
+@Getter
 public class User {
-  private UUID id;
-  private String name;
-  private String email;
-  private String password;
-  private Role role;
-  private Status status;
-
-  public User(UUID id, String name, String email, String password, Role role, Status status) {
-    this.id = id;
-    this.name = name;
-    this.email = email;
-    this.password = password;
-    this.role = role;
-    this.status = status;
+  private final UUID id;
+  private final String name;
+  private final String email;
+  private final String password;
+  private final Role role;
+  private final Status status;
+  private final UUID coachId;
+  private final int workoutPerWeek;
+  
+  
+  private User(Builder builder) {
+    this.id = builder.id;
+    this.name = builder.name;
+    this.email = builder.email;
+    this.password = builder.password;
+    this.role = builder.role;
+    this.status = builder.status;
+    this.coachId = builder.coachId;
+    this.workoutPerWeek = builder.workoutPerWeek;
   }
 
-  public UUID getId() {
-    return id;
+  public static Builder builder() {
+    return new Builder();
   }
+  
+  public static class Builder {
+    private UUID id;
+    private String name;
+    private String email;
+    private String password;
+    private Role role;
+    private Status status;
+    private UUID coachId;
+    private int workoutPerWeek;
 
-  public String getName() {
-    return name;
-  }
+    public Builder id(UUID id) {
+      this.id = id;
+      return this;
+    }
 
-  public String getEmail() {
-    return email;
-  }
+    public Builder name(String name) {
+      this.name = name;
+      return this;
+    }
 
-  public String getPassword() {
-    return password;
-  }
+    public Builder email(String email) {
+      this.email = email;
+      return this;
+    }
 
-  public Role getRole() {
-    return role;
-  }
+    public Builder password(String password) {
+      this.password = password;
+      return this;
+    }
 
-  public Status getStatus() {
-    return status;
+    public Builder role(Role role) {
+      this.role = role;
+      return this;
+    }
+
+    public Builder status(Status status) {
+      this.status = status;
+      return this;
+    }
+    public Builder workoutPerWeek(int workoutPerWeek) {
+      this.workoutPerWeek = workoutPerWeek;
+      return this;
+    }
+    public Builder coachId(UUID coachId) {
+      this.coachId = coachId;
+      return this;
+    }
+    
+    public User build() {
+      return new User(this);
+    }
   }
 }

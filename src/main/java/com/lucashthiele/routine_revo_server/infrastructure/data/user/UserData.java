@@ -1,14 +1,15 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.RoleData;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,14 @@ public class UserData {
   private String email;
   @Column(name = "hashed_password", nullable = false)
   private String hashedPassword;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(
+      name = "coach_id",
+      referencedColumnName = "id"
+  )
+  private UserData coach;
+  @Column(name = "workout_per_week")
+  private int workoutPerWeek;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, columnDefinition = "user_status")
@@ -36,7 +45,7 @@ public class UserData {
   private StatusData status;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, columnDefinition = "user_status")
+  @Column(nullable = false, columnDefinition = "user_role")
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   private RoleData role;
 
@@ -46,5 +55,8 @@ public class UserData {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-
+  public String toJson() throws JsonProcessingException {
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    return ow.writeValueAsString(this);
+  }
 }
