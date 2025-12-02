@@ -229,6 +229,24 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
   }
 
+  @ExceptionHandler(com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleExerciseNotFoundException(
+      com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseNotFoundException ex, 
+      WebRequest request) {
+    
+    LOGGER.error("Exercise not found", ex);
+    
+    ErrorResponse errorResponse = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.NOT_FOUND.value(),
+        "Exercise Not Found",
+        ex.getMessage(),
+        request.getDescription(false).replace("uri=", "")
+    );
+    
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(
       Exception ex, WebRequest request) {
