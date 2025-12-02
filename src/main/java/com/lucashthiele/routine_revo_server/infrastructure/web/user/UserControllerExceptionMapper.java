@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.web.user;
 
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
 import com.lucashthiele.routine_revo_server.usecase.user.exception.JsonProcessingRuntimeException;
+import com.lucashthiele.routine_revo_server.usecase.user.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,5 +25,13 @@ public class UserControllerExceptionMapper {
     LOGGER.error("JSON Processing error: {}", jsonProcessingRuntimeException.getMessage());
     Map<String, String> errorBody = Map.of("error", jsonProcessingRuntimeException.getMessage());
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+  }
+  
+  @ExceptionHandler(UserNotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public ResponseEntity<Map<String, String>> handleUserNotFoundException(UserNotFoundException userNotFoundException) {
+    LOGGER.error("User not found: {}", userNotFoundException.getMessage());
+    Map<String, String> errorBody = Map.of("error", userNotFoundException.getMessage());
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody);
   }
 }

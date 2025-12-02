@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.data.user;
 
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface UserJpaRepository extends JpaRepository<UserData, UUID> {
+public interface UserJpaRepository extends JpaRepository<UserData, UUID>, JpaSpecificationExecutor<UserData> {
   Optional<UserData> findByEmail(String email);
 
   @Modifying

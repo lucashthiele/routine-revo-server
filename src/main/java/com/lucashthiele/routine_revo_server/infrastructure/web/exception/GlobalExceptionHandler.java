@@ -156,15 +156,30 @@ public class GlobalExceptionHandler {
     
     LOGGER.error("JPA system exception occurred", ex);
     
+    String message = "Ocorreu um erro no banco de dados. Por favor, contate o suporte.";
+    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+    
+    // Check for specific database constraint violations
+    if (ex.getMessage() != null) {
+      String exceptionMessage = ex.getMessage();
+      
+      // Check for coach role constraint violation
+      if (exceptionMessage.contains("The user referenced as coach_id must have the role COACH") ||
+          exceptionMessage.contains("check_coach_role")) {
+        message = "O usuário referenciado como treinador deve ter a função COACH.";
+        status = HttpStatus.BAD_REQUEST;
+      }
+    }
+    
     ErrorResponse errorResponse = new ErrorResponse(
         LocalDateTime.now(),
-        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-        "Database Error",
-        "A database error occurred. Please contact support.",
+        status.value(),
+        status == HttpStatus.BAD_REQUEST ? "Erro de Validação" : "Erro no Banco de Dados",
+        message,
         request.getDescription(false).replace("uri=", "")
     );
     
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    return ResponseEntity.status(status).body(errorResponse);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
@@ -191,6 +206,23 @@ public class GlobalExceptionHandler {
         HttpStatus.BAD_REQUEST.value(),
         "Data Integrity Violation",
         message,
+        request.getDescription(false).replace("uri=", "")
+    );
+    
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+  }
+
+  @ExceptionHandler(InvalidCoachRoleException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidCoachRoleException(
+      InvalidCoachRoleException ex, WebRequest request) {
+    
+    LOGGER.error("Invalid coach role", ex);
+    
+    ErrorResponse errorResponse = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.BAD_REQUEST.value(),
+        "Erro de Validação",
+        "O usuário referenciado como treinador deve ter a função COACH.",
         request.getDescription(false).replace("uri=", "")
     );
     

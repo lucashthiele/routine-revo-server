@@ -20,6 +20,7 @@ public class UserDataMapper {
         .password(userData.getHashedPassword())
         .role(Role.valueOf(userData.getRole().name()))
         .status(Status.valueOf(userData.getStatus().name()))
+        .coachId(userData.getCoach() != null ? userData.getCoach().getId() : null)
         .workoutPerWeek(userData.getWorkoutPerWeek())
         .build();
   }
@@ -39,12 +40,21 @@ public class UserDataMapper {
       );
     }
     
-    UserData userData = new UserData();userData.setId(user.getId());
+    UserData userData = new UserData();
+    userData.setId(user.getId());
     userData.setName(user.getName());
     userData.setEmail(user.getEmail());
     userData.setHashedPassword(user.getPassword());
     userData.setRole(RoleData.valueOf(user.getRole().name()));
     userData.setStatus(StatusData.valueOf(user.getStatus().name()));
+    userData.setWorkoutPerWeek(user.getWorkoutPerWeek());
+    
+    // Set coach relationship if coachId is present
+    if (user.getCoachId() != null) {
+      UserData coach = new UserData();
+      coach.setId(user.getCoachId());
+      userData.setCoach(coach);
+    }
     
     return userData;
   }
