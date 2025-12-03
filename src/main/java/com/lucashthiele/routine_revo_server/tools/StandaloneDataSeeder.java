@@ -55,6 +55,12 @@ public class StandaloneDataSeeder {
   private static final UUID EXERCISE_CYCLING = UUID.fromString("10000000-0000-0000-0000-000000000022");
   private static final UUID EXERCISE_BURPEES = UUID.fromString("10000000-0000-0000-0000-000000000023");
   
+  // Routines
+  private static final UUID ROUTINE_UPPER_BODY = UUID.fromString("20000000-0000-0000-0000-000000000001");
+  private static final UUID ROUTINE_LOWER_BODY = UUID.fromString("20000000-0000-0000-0000-000000000002");
+  private static final UUID ROUTINE_FULL_BODY = UUID.fromString("20000000-0000-0000-0000-000000000003");
+  private static final UUID ROUTINE_CARDIO_ABS = UUID.fromString("20000000-0000-0000-0000-000000000004");
+  
   public static void main(String[] args) {
     System.out.println("========================================");
     System.out.println("  Routine Revo - Standalone Data Seeder");
@@ -100,6 +106,7 @@ public class StandaloneDataSeeder {
       
       seedUsers(conn);
       seedExercises(conn);
+      seedRoutines(conn);
       
       System.out.println();
       System.out.println("========================================");
@@ -137,6 +144,13 @@ public class StandaloneDataSeeder {
       System.out.println("    - 2 Ab exercises");
       System.out.println("    - 2 Cardio exercises");
       System.out.println("    - 1 Full Body exercise");
+      System.out.println();
+      System.out.println("Routines:");
+      System.out.println("  4 sample routines created and assigned to members:");
+      System.out.println("    - Upper Body Routine (Alice)");
+      System.out.println("    - Lower Body Routine (Alice)");
+      System.out.println("    - Full Body Routine (Bob)");
+      System.out.println("    - Cardio & Abs (Bob)");
       System.out.println();
       
     } catch (SQLException e) {
@@ -176,6 +190,20 @@ public class StandaloneDataSeeder {
   
   private static void clearExistingData(Connection conn) throws SQLException {
     // Delete in correct order to respect foreign key constraints
+    if (tableExists(conn, "routine_items")) {
+      String sqlRoutineItems = "DELETE FROM routine_items";
+      try (PreparedStatement stmt = conn.prepareStatement(sqlRoutineItems)) {
+        stmt.executeUpdate();
+      }
+    }
+    
+    if (tableExists(conn, "routines")) {
+      String sqlRoutines = "DELETE FROM routines";
+      try (PreparedStatement stmt = conn.prepareStatement(sqlRoutines)) {
+        stmt.executeUpdate();
+      }
+    }
+    
     if (tableExists(conn, "exercises")) {
       String sqlExercises = "DELETE FROM exercises";
       try (PreparedStatement stmt = conn.prepareStatement(sqlExercises)) {
@@ -457,6 +485,175 @@ public class StandaloneDataSeeder {
       stmt.setString(6, imageUrl);
       stmt.setTimestamp(7, Timestamp.valueOf(now));
       stmt.setTimestamp(8, Timestamp.valueOf(now));
+      
+      stmt.executeUpdate();
+    }
+  }
+  
+  private static void seedRoutines(Connection conn) throws SQLException {
+    if (!tableExists(conn, "routines")) {
+      System.out.println("⚠ Routines table does not exist yet. Skipping routine seeding.");
+      System.out.println("  Run Flyway migration V5 first to create the routines tables.");
+      return;
+    }
+    
+    System.out.println("Seeding routines...");
+    
+    // Disable auto-commit for transaction
+    conn.setAutoCommit(false);
+    
+    try {
+      // Calculate expiration dates (30 days from now)
+      LocalDateTime expirationDate = LocalDateTime.now().plusDays(30);
+      
+      // ROUTINE 1: Upper Body Routine for Alice (created by John Coach)
+      insertRoutine(conn, ROUTINE_UPPER_BODY, "Upper Body Strength",
+          "Complete upper body workout focusing on chest, back, and shoulders",
+          expirationDate, JOHN_COACH_ID, ALICE_MEMBER_ID);
+      System.out.println("  ✓ Created routine: Upper Body Strength");
+      
+      // Add items to Upper Body Routine
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_BENCH_PRESS,
+          4, "8-10", 60.0, "90 sec", 1);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_BARBELL_ROW,
+          4, "8-10", 55.0, "90 sec", 2);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_SHOULDER_PRESS,
+          3, "10-12", 40.0, "60 sec", 3);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_LATERAL_RAISE,
+          3, "12-15", 10.0, "45 sec", 4);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_BARBELL_CURL,
+          3, "10-12", 25.0, "60 sec", 5);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_UPPER_BODY, EXERCISE_TRICEP_PUSHDOWN,
+          3, "12-15", null, "45 sec", 6);
+      System.out.println("    ✓ Added 6 exercises to Upper Body Strength");
+      
+      // ROUTINE 2: Lower Body Routine for Alice (created by John Coach)
+      insertRoutine(conn, ROUTINE_LOWER_BODY, "Lower Body Power",
+          "Leg day focusing on strength and muscle development",
+          expirationDate, JOHN_COACH_ID, ALICE_MEMBER_ID);
+      System.out.println("  ✓ Created routine: Lower Body Power");
+      
+      // Add items to Lower Body Routine
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_LOWER_BODY, EXERCISE_SQUAT,
+          5, "5-8", 80.0, "2 min", 1);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_LOWER_BODY, EXERCISE_LEG_PRESS,
+          4, "10-12", 120.0, "90 sec", 2);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_LOWER_BODY, EXERCISE_LUNGES,
+          3, "12-15/leg", 15.0, "60 sec", 3);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_LOWER_BODY, EXERCISE_HIP_THRUST,
+          4, "10-12", 70.0, "90 sec", 4);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_LOWER_BODY, EXERCISE_GLUTE_BRIDGE,
+          3, "15-20", 40.0, "45 sec", 5);
+      System.out.println("    ✓ Added 5 exercises to Lower Body Power");
+      
+      // ROUTINE 3: Full Body Routine for Bob (created by John Coach)
+      insertRoutine(conn, ROUTINE_FULL_BODY, "Full Body Circuit",
+          "Complete full body workout for overall fitness",
+          expirationDate, JOHN_COACH_ID, BOB_MEMBER_ID);
+      System.out.println("  ✓ Created routine: Full Body Circuit");
+      
+      // Add items to Full Body Routine
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_DEADLIFT,
+          4, "6-8", 90.0, "2 min", 1);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_BENCH_PRESS,
+          3, "8-10", 55.0, "90 sec", 2);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_SQUAT,
+          4, "8-10", 70.0, "2 min", 3);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_PULL_UP,
+          3, "AMRAP", null, "90 sec", 4);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_SHOULDER_PRESS,
+          3, "10-12", 35.0, "60 sec", 5);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_FULL_BODY, EXERCISE_PLANK,
+          3, "45-60 sec", null, "60 sec", 6);
+      System.out.println("    ✓ Added 6 exercises to Full Body Circuit");
+      
+      // ROUTINE 4: Cardio & Abs for Bob (created by John Coach)
+      insertRoutine(conn, ROUTINE_CARDIO_ABS, "Cardio & Core Blast",
+          "High intensity cardio and core strengthening routine",
+          expirationDate, JOHN_COACH_ID, BOB_MEMBER_ID);
+      System.out.println("  ✓ Created routine: Cardio & Core Blast");
+      
+      // Add items to Cardio & Abs Routine
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_CARDIO_ABS, EXERCISE_RUNNING,
+          1, "20 min", null, "2 min", 1);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_CARDIO_ABS, EXERCISE_BURPEES,
+          3, "15-20", null, "60 sec", 2);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_CARDIO_ABS, EXERCISE_PLANK,
+          4, "45-60 sec", null, "45 sec", 3);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_CARDIO_ABS, EXERCISE_CRUNCHES,
+          4, "20-25", null, "45 sec", 4);
+      insertRoutineItem(conn, UUID.randomUUID(), ROUTINE_CARDIO_ABS, EXERCISE_CYCLING,
+          1, "15 min", null, "done", 5);
+      System.out.println("    ✓ Added 5 exercises to Cardio & Core Blast");
+      
+      // Commit transaction
+      conn.commit();
+      System.out.println("  ✓ Successfully seeded 4 routines with 22 total exercises");
+      
+    } catch (SQLException e) {
+      // Rollback on error
+      conn.rollback();
+      throw e;
+    } finally {
+      conn.setAutoCommit(true);
+    }
+  }
+  
+  private static void insertRoutine(
+      Connection conn,
+      UUID id,
+      String name,
+      String description,
+      LocalDateTime expirationDate,
+      UUID creatorId,
+      UUID memberId
+  ) throws SQLException {
+    String sql = "INSERT INTO routines (id, name, description, expiration_date, creator_id, member_id, created_at, updated_at) " +
+                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    LocalDateTime now = LocalDateTime.now();
+    
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, id);
+      stmt.setString(2, name);
+      stmt.setString(3, description);
+      stmt.setTimestamp(4, expirationDate != null ? Timestamp.valueOf(expirationDate) : null);
+      stmt.setObject(5, creatorId);
+      stmt.setObject(6, memberId);
+      stmt.setTimestamp(7, Timestamp.valueOf(now));
+      stmt.setTimestamp(8, Timestamp.valueOf(now));
+      
+      stmt.executeUpdate();
+    }
+  }
+  
+  private static void insertRoutineItem(
+      Connection conn,
+      UUID id,
+      UUID routineId,
+      UUID exerciseId,
+      Integer sets,
+      String reps,
+      Double load,
+      String restTime,
+      Integer sequenceOrder
+  ) throws SQLException {
+    String sql = "INSERT INTO routine_items (id, routine_id, exercise_id, sets, reps, load, rest_time, sequence_order) " +
+                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, id);
+      stmt.setObject(2, routineId);
+      stmt.setObject(3, exerciseId);
+      stmt.setInt(4, sets);
+      stmt.setString(5, reps);
+      if (load != null) {
+        stmt.setDouble(6, load);
+      } else {
+        stmt.setNull(6, java.sql.Types.DOUBLE);
+      }
+      stmt.setString(7, restTime);
+      stmt.setInt(8, sequenceOrder);
       
       stmt.executeUpdate();
     }

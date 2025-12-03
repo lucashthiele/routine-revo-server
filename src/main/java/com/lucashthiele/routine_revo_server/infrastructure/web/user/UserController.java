@@ -8,12 +8,14 @@ import com.lucashthiele.routine_revo_server.usecase.user.GetUserByIdUseCase;
 import com.lucashthiele.routine_revo_server.usecase.user.InactivateUserUseCase;
 import com.lucashthiele.routine_revo_server.usecase.user.LinkCoachUseCase;
 import com.lucashthiele.routine_revo_server.usecase.user.ListUsersUseCase;
+import com.lucashthiele.routine_revo_server.usecase.user.SearchMembersUseCase;
 import com.lucashthiele.routine_revo_server.usecase.user.UpdateUserUseCase;
 import com.lucashthiele.routine_revo_server.usecase.user.input.CreateUserInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.GetUserByIdInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.InactivateUserInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.LinkCoachInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.ListUsersInput;
+import com.lucashthiele.routine_revo_server.usecase.user.input.SearchMembersInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.UpdateUserInput;
 import com.lucashthiele.routine_revo_server.usecase.user.output.ListUsersOutput;
 import com.lucashthiele.routine_revo_server.usecase.user.output.UserOutput;
@@ -37,19 +39,22 @@ public class UserController {
   private final UpdateUserUseCase updateUserUseCase;
   private final InactivateUserUseCase inactivateUserUseCase;
   private final LinkCoachUseCase linkCoachUseCase;
+  private final SearchMembersUseCase searchMembersUseCase;
 
   public UserController(CreateUserUseCase createUserUseCase,
                         ListUsersUseCase listUsersUseCase,
                         GetUserByIdUseCase getUserByIdUseCase,
                         UpdateUserUseCase updateUserUseCase,
                         InactivateUserUseCase inactivateUserUseCase,
-                        LinkCoachUseCase linkCoachUseCase) {
+                        LinkCoachUseCase linkCoachUseCase,
+                        SearchMembersUseCase searchMembersUseCase) {
     this.createUserUseCase = createUserUseCase;
     this.listUsersUseCase = listUsersUseCase;
     this.getUserByIdUseCase = getUserByIdUseCase;
     this.updateUserUseCase = updateUserUseCase;
     this.inactivateUserUseCase = inactivateUserUseCase;
     this.linkCoachUseCase = linkCoachUseCase;
+    this.searchMembersUseCase = searchMembersUseCase;
   }
   
   @PostMapping
@@ -172,5 +177,31 @@ public class UserController {
     
     LOGGER.info("PATCH /api/v1/users/{}/coach - Coach linked successfully", userId);
     return ResponseEntity.ok().build();
+  }
+  
+  @GetMapping("/members")
+  public ResponseEntity<ListUsersResponse> searchMembers(
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) Integer page,
+      @RequestParam(required = false) Integer size) {
+    
+    LOGGER.info("GET /api/v1/users/members - Search active members request received");
+    
+    SearchMembersInput input = new SearchMembersInput(name, page, size);
+    
+    ListUsersOutput output = searchMembersUseCase.execute(input);
+    
+    ListUsersResponse response = new ListUsersResponse(
+        output.users().stream()
+            .map(u -> new UserResponse(u.id(), u.name(), u.email(), u.role(), u.status(), u.coachId(), u.workoutPerWeek()))
+            .toList(),
+        output.total(),
+        output.page(),
+        output.size(),
+        output.totalPages()
+    );
+    
+    LOGGER.info("GET /api/v1/users/members - Returning {} active members", response.users().size());
+    return ResponseEntity.ok(response);
   }
 }
