@@ -1,6 +1,7 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.auth;
 
 import com.lucashthiele.routine_revo_server.usecase.auth.exception.InvalidCredentialsException;
+import com.lucashthiele.routine_revo_server.usecase.auth.exception.InvalidRefreshTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,14 @@ public class AuthExceptionMapper {
   public ResponseEntity<Map<String, String>> handleInvalidCredentials(InvalidCredentialsException invalidCredentialsException) {
     LOGGER.error("Authentication error: {}", invalidCredentialsException.getMessage());
     Map<String, String> errorBody = Map.of("error", invalidCredentialsException.getMessage());
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
+  }
+  
+  @ExceptionHandler(InvalidRefreshTokenException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public ResponseEntity<Map<String, String>> handleInvalidRefreshToken(InvalidRefreshTokenException invalidRefreshTokenException) {
+    LOGGER.error("Refresh token error: {}", invalidRefreshTokenException.getMessage());
+    Map<String, String> errorBody = Map.of("error", invalidRefreshTokenException.getMessage());
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
   }
 }

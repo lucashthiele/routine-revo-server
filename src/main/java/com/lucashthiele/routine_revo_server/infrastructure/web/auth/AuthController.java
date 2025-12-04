@@ -3,7 +3,9 @@ package com.lucashthiele.routine_revo_server.infrastructure.web.auth;
 import com.lucashthiele.routine_revo_server.infrastructure.web.auth.dto.AuthRequest;
 import com.lucashthiele.routine_revo_server.infrastructure.web.auth.dto.AuthResponse;
 import com.lucashthiele.routine_revo_server.usecase.auth.AuthenticateUserUseCase;
+import com.lucashthiele.routine_revo_server.usecase.auth.RefreshTokenUseCase;
 import com.lucashthiele.routine_revo_server.usecase.auth.input.AuthInput;
+import com.lucashthiele.routine_revo_server.usecase.auth.input.RefreshTokenInput;
 import com.lucashthiele.routine_revo_server.usecase.auth.output.AuthOutput;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,9 +23,14 @@ public class AuthController {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
   
   private final AuthenticateUserUseCase authenticateUserUseCase;
+  private final RefreshTokenUseCase refreshTokenUseCase;
 
-  public AuthController(AuthenticateUserUseCase authenticateUserUseCase) {
+  public AuthController(
+      AuthenticateUserUseCase authenticateUserUseCase,
+      RefreshTokenUseCase refreshTokenUseCase
+  ) {
     this.authenticateUserUseCase = authenticateUserUseCase;
+    this.refreshTokenUseCase = refreshTokenUseCase;
   }
   
   @PostMapping("/login")
@@ -34,6 +42,17 @@ public class AuthController {
     AuthOutput output = authenticateUserUseCase.execute(input);
     
     LOGGER.info("POST /api/v1/auth/login - Login successful for email: {}", request.email());
+    return ResponseEntity.ok(AuthResponse.from(output));
+  }
+  
+  @PostMapping("/refresh")
+  public ResponseEntity<AuthResponse> refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
+    LOGGER.info("POST /api/v1/auth/refresh - Refresh token request received");
+    
+    RefreshTokenInput input = new RefreshTokenInput(refreshToken);
+    AuthOutput output = refreshTokenUseCase.execute(input);
+    
+    LOGGER.info("POST /api/v1/auth/refresh - Token refresh successful");
     return ResponseEntity.ok(AuthResponse.from(output));
   }
 }
