@@ -61,6 +61,14 @@ public class StandaloneDataSeeder {
   private static final UUID ROUTINE_FULL_BODY = UUID.fromString("20000000-0000-0000-0000-000000000003");
   private static final UUID ROUTINE_CARDIO_ABS = UUID.fromString("20000000-0000-0000-0000-000000000004");
   
+  // Workout Sessions
+  private static final UUID WORKOUT_SESSION_1 = UUID.fromString("30000000-0000-0000-0000-000000000001");
+  private static final UUID WORKOUT_SESSION_2 = UUID.fromString("30000000-0000-0000-0000-000000000002");
+  private static final UUID WORKOUT_SESSION_3 = UUID.fromString("30000000-0000-0000-0000-000000000003");
+  private static final UUID WORKOUT_SESSION_4 = UUID.fromString("30000000-0000-0000-0000-000000000004");
+  private static final UUID WORKOUT_SESSION_5 = UUID.fromString("30000000-0000-0000-0000-000000000005");
+  private static final UUID WORKOUT_SESSION_6 = UUID.fromString("30000000-0000-0000-0000-000000000006");
+  
   public static void main(String[] args) {
     System.out.println("========================================");
     System.out.println("  Routine Revo - Standalone Data Seeder");
@@ -107,6 +115,7 @@ public class StandaloneDataSeeder {
       seedUsers(conn);
       seedExercises(conn);
       seedRoutines(conn);
+      seedWorkoutSessions(conn);
       
       System.out.println();
       System.out.println("========================================");
@@ -152,6 +161,12 @@ public class StandaloneDataSeeder {
       System.out.println("    - Full Body Routine (Bob)");
       System.out.println("    - Cardio & Abs (Bob)");
       System.out.println();
+      System.out.println("Workout Sessions:");
+      System.out.println("  6 sample workout sessions created:");
+      System.out.println("    - Alice: 4 sessions (Upper Body x2, Lower Body x2)");
+      System.out.println("    - Bob: 2 sessions (Full Body x1, Cardio & Abs x1)");
+      System.out.println("  Adherence rates updated based on workout history");
+      System.out.println();
       
     } catch (SQLException e) {
       System.err.println("✗ Database error: " + e.getMessage());
@@ -190,6 +205,22 @@ public class StandaloneDataSeeder {
   
   private static void clearExistingData(Connection conn) throws SQLException {
     // Delete in correct order to respect foreign key constraints
+    
+    // Clear workout data first (depends on users, routines, exercises)
+    if (tableExists(conn, "workout_items")) {
+      String sqlWorkoutItems = "DELETE FROM workout_items";
+      try (PreparedStatement stmt = conn.prepareStatement(sqlWorkoutItems)) {
+        stmt.executeUpdate();
+      }
+    }
+    
+    if (tableExists(conn, "workout_sessions")) {
+      String sqlWorkoutSessions = "DELETE FROM workout_sessions";
+      try (PreparedStatement stmt = conn.prepareStatement(sqlWorkoutSessions)) {
+        stmt.executeUpdate();
+      }
+    }
+    
     if (tableExists(conn, "routine_items")) {
       String sqlRoutineItems = "DELETE FROM routine_items";
       try (PreparedStatement stmt = conn.prepareStatement(sqlRoutineItems)) {
@@ -654,6 +685,210 @@ public class StandaloneDataSeeder {
       }
       stmt.setString(7, restTime);
       stmt.setInt(8, sequenceOrder);
+      
+      stmt.executeUpdate();
+    }
+  }
+  
+  private static void seedWorkoutSessions(Connection conn) throws SQLException {
+    if (!tableExists(conn, "workout_sessions")) {
+      System.out.println("⚠ Workout sessions table does not exist yet. Skipping workout seeding.");
+      System.out.println("  Run Flyway migration V7 first to create the workout tables.");
+      return;
+    }
+    
+    System.out.println("Seeding workout sessions...");
+    
+    // Disable auto-commit for transaction
+    conn.setAutoCommit(false);
+    
+    try {
+      // Create workout sessions spread over the last 30 days
+      LocalDateTime now = LocalDateTime.now();
+      
+      // ==========================================
+      // ALICE's Workout Sessions (4 sessions)
+      // ==========================================
+      
+      // Session 1: Upper Body - 3 days ago
+      LocalDateTime session1Start = now.minusDays(3).withHour(9).withMinute(0);
+      LocalDateTime session1End = session1Start.plusHours(1);
+      insertWorkoutSession(conn, WORKOUT_SESSION_1, ALICE_MEMBER_ID, ROUTINE_UPPER_BODY,
+          session1Start, session1End);
+      System.out.println("  ✓ Created workout session: Alice - Upper Body (3 days ago)");
+      
+      // Add workout items for Session 1
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_1, EXERCISE_BENCH_PRESS, 4, 10, 60.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_1, EXERCISE_BARBELL_ROW, 4, 10, 55.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_1, EXERCISE_SHOULDER_PRESS, 3, 12, 40.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_1, EXERCISE_BARBELL_CURL, 3, 12, 25.0);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // Session 2: Lower Body - 5 days ago
+      LocalDateTime session2Start = now.minusDays(5).withHour(17).withMinute(30);
+      LocalDateTime session2End = session2Start.plusMinutes(75);
+      insertWorkoutSession(conn, WORKOUT_SESSION_2, ALICE_MEMBER_ID, ROUTINE_LOWER_BODY,
+          session2Start, session2End);
+      System.out.println("  ✓ Created workout session: Alice - Lower Body (5 days ago)");
+      
+      // Add workout items for Session 2
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_2, EXERCISE_SQUAT, 5, 8, 80.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_2, EXERCISE_LEG_PRESS, 4, 12, 120.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_2, EXERCISE_LUNGES, 3, 15, 15.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_2, EXERCISE_HIP_THRUST, 4, 12, 70.0);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // Session 3: Upper Body - 10 days ago
+      LocalDateTime session3Start = now.minusDays(10).withHour(8).withMinute(0);
+      LocalDateTime session3End = session3Start.plusMinutes(55);
+      insertWorkoutSession(conn, WORKOUT_SESSION_3, ALICE_MEMBER_ID, ROUTINE_UPPER_BODY,
+          session3Start, session3End);
+      System.out.println("  ✓ Created workout session: Alice - Upper Body (10 days ago)");
+      
+      // Add workout items for Session 3
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_3, EXERCISE_BENCH_PRESS, 4, 8, 62.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_3, EXERCISE_PULL_UP, 3, 8, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_3, EXERCISE_LATERAL_RAISE, 3, 15, 10.0);
+      System.out.println("    ✓ Added 3 exercises to session");
+      
+      // Session 4: Lower Body - 14 days ago
+      LocalDateTime session4Start = now.minusDays(14).withHour(18).withMinute(0);
+      LocalDateTime session4End = session4Start.plusMinutes(80);
+      insertWorkoutSession(conn, WORKOUT_SESSION_4, ALICE_MEMBER_ID, ROUTINE_LOWER_BODY,
+          session4Start, session4End);
+      System.out.println("  ✓ Created workout session: Alice - Lower Body (14 days ago)");
+      
+      // Add workout items for Session 4
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_4, EXERCISE_SQUAT, 5, 6, 85.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_4, EXERCISE_DEADLIFT, 4, 6, 90.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_4, EXERCISE_GLUTE_BRIDGE, 3, 20, 40.0);
+      System.out.println("    ✓ Added 3 exercises to session");
+      
+      // ==========================================
+      // BOB's Workout Sessions (2 sessions)
+      // ==========================================
+      
+      // Session 5: Full Body - 7 days ago
+      LocalDateTime session5Start = now.minusDays(7).withHour(7).withMinute(0);
+      LocalDateTime session5End = session5Start.plusMinutes(90);
+      insertWorkoutSession(conn, WORKOUT_SESSION_5, BOB_MEMBER_ID, ROUTINE_FULL_BODY,
+          session5Start, session5End);
+      System.out.println("  ✓ Created workout session: Bob - Full Body (7 days ago)");
+      
+      // Add workout items for Session 5
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_5, EXERCISE_DEADLIFT, 4, 8, 90.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_5, EXERCISE_BENCH_PRESS, 3, 10, 55.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_5, EXERCISE_SQUAT, 4, 10, 70.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_5, EXERCISE_PULL_UP, 3, 6, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_5, EXERCISE_PLANK, 3, 60, null);
+      System.out.println("    ✓ Added 5 exercises to session");
+      
+      // Session 6: Cardio & Abs - 2 days ago
+      LocalDateTime session6Start = now.minusDays(2).withHour(6).withMinute(30);
+      LocalDateTime session6End = session6Start.plusMinutes(45);
+      insertWorkoutSession(conn, WORKOUT_SESSION_6, BOB_MEMBER_ID, ROUTINE_CARDIO_ABS,
+          session6Start, session6End);
+      System.out.println("  ✓ Created workout session: Bob - Cardio & Abs (2 days ago)");
+      
+      // Add workout items for Session 6
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_6, EXERCISE_RUNNING, 1, 20, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_6, EXERCISE_BURPEES, 3, 15, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_6, EXERCISE_PLANK, 4, 45, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_6, EXERCISE_CRUNCHES, 4, 25, null);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // ==========================================
+      // Update adherence rates for members
+      // ==========================================
+      System.out.println("  Calculating adherence rates...");
+      
+      // Alice: 4 workouts in 30 days, target is 3/week (~12.9 expected)
+      // Adherence = (4 / 12.9) * 100 ≈ 31%
+      updateUserAdherenceRate(conn, ALICE_MEMBER_ID, 31.01);
+      System.out.println("    ✓ Alice adherence rate: 31.01%");
+      
+      // Bob: 2 workouts in 30 days, target is 4/week (~17.1 expected)
+      // Adherence = (2 / 17.1) * 100 ≈ 11.7%
+      updateUserAdherenceRate(conn, BOB_MEMBER_ID, 11.70);
+      System.out.println("    ✓ Bob adherence rate: 11.70%");
+      
+      // Commit transaction
+      conn.commit();
+      System.out.println("  ✓ Successfully seeded 6 workout sessions with 23 total exercises logged");
+      
+    } catch (SQLException e) {
+      // Rollback on error
+      conn.rollback();
+      throw e;
+    } finally {
+      conn.setAutoCommit(true);
+    }
+  }
+  
+  private static void insertWorkoutSession(
+      Connection conn,
+      UUID id,
+      UUID memberId,
+      UUID routineId,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt
+  ) throws SQLException {
+    String sql = "INSERT INTO workout_sessions (id, member_id, routine_id, started_at, ended_at, created_at, updated_at) " +
+                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    
+    LocalDateTime now = LocalDateTime.now();
+    
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, id);
+      stmt.setObject(2, memberId);
+      stmt.setObject(3, routineId);
+      stmt.setTimestamp(4, Timestamp.valueOf(startedAt));
+      stmt.setTimestamp(5, endedAt != null ? Timestamp.valueOf(endedAt) : null);
+      stmt.setTimestamp(6, Timestamp.valueOf(now));
+      stmt.setTimestamp(7, Timestamp.valueOf(now));
+      
+      stmt.executeUpdate();
+    }
+  }
+  
+  private static void insertWorkoutItem(
+      Connection conn,
+      UUID id,
+      UUID workoutSessionId,
+      UUID exerciseId,
+      Integer setsDone,
+      Integer repsDone,
+      Double loadUsed
+  ) throws SQLException {
+    String sql = "INSERT INTO workout_items (id, workout_session_id, exercise_id, sets_done, reps_done, load_used) " +
+                 "VALUES (?, ?, ?, ?, ?, ?)";
+    
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, id);
+      stmt.setObject(2, workoutSessionId);
+      stmt.setObject(3, exerciseId);
+      stmt.setInt(4, setsDone);
+      stmt.setInt(5, repsDone);
+      if (loadUsed != null) {
+        stmt.setDouble(6, loadUsed);
+      } else {
+        stmt.setNull(6, java.sql.Types.DOUBLE);
+      }
+      
+      stmt.executeUpdate();
+    }
+  }
+  
+  private static void updateUserAdherenceRate(
+      Connection conn,
+      UUID userId,
+      Double adherenceRate
+  ) throws SQLException {
+    String sql = "UPDATE users SET adherence_rate = ? WHERE id = ?";
+    
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+      stmt.setDouble(1, adherenceRate);
+      stmt.setObject(2, userId);
       
       stmt.executeUpdate();
     }

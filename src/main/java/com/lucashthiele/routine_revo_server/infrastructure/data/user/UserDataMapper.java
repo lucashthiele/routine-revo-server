@@ -22,6 +22,7 @@ public class UserDataMapper {
         .status(Status.valueOf(userData.getStatus().name()))
         .coachId(userData.getCoach() != null ? userData.getCoach().getId() : null)
         .workoutPerWeek(userData.getWorkoutPerWeek())
+        .adherenceRate(userData.getAdherenceRate())
         .build();
   }
   
@@ -48,6 +49,7 @@ public class UserDataMapper {
     userData.setRole(RoleData.valueOf(user.getRole().name()));
     userData.setStatus(StatusData.valueOf(user.getStatus().name()));
     userData.setWorkoutPerWeek(user.getWorkoutPerWeek());
+    userData.setAdherenceRate(user.getAdherenceRate());
     
     // Set coach relationship if coachId is present
     if (user.getCoachId() != null) {

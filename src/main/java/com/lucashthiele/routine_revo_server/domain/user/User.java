@@ -14,6 +14,7 @@ public class User {
   private final Status status;
   private final UUID coachId;
   private final Integer workoutPerWeek;
+  private final Double adherenceRate;
   
   
   private User(Builder builder) {
@@ -25,6 +26,7 @@ public class User {
     this.status = builder.status;
     this.coachId = builder.coachId;
     this.workoutPerWeek = builder.workoutPerWeek;
+    this.adherenceRate = builder.adherenceRate;
   }
 
   public static Builder builder() {
@@ -40,6 +42,7 @@ public class User {
     private Status status;
     private UUID coachId;
     private Integer workoutPerWeek;
+    private Double adherenceRate;
 
     public Builder id(UUID id) {
       this.id = id;
@@ -76,6 +79,11 @@ public class User {
     }
     public Builder coachId(UUID coachId) {
       this.coachId = coachId;
+      return this;
+    }
+    
+    public Builder adherenceRate(Double adherenceRate) {
+      this.adherenceRate = adherenceRate;
       return this;
     }
     

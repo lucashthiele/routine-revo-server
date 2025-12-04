@@ -39,6 +39,8 @@ public class UserData {
   private UserData coach;
   @Column(name = "workout_per_week")
   private Integer workoutPerWeek;
+  @Column(name = "adherence_rate")
+  private Double adherenceRate;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, columnDefinition = "user_status")
