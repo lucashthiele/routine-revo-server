@@ -59,7 +59,7 @@ public class AuthenticateUserUseCase {
     String refreshToken = jwtTokenProvider.generateRefreshToken(user);
     
     LOGGER.info("User authenticated successfully: {}", input.email());
-    return new AuthOutput(authToken, refreshToken);
+    return AuthOutput.of(authToken, refreshToken, user);
   }
   
   private void validateInput(AuthInput input) {

@@ -58,7 +58,7 @@ public class RefreshTokenUseCase {
     String newRefreshToken = authTokenProvider.generateRefreshToken(user);
     
     LOGGER.info("New tokens generated successfully for email: {}", email);
-    return new AuthOutput(newAuthToken, newRefreshToken);
+    return AuthOutput.of(newAuthToken, newRefreshToken, user);
   }
 }
 

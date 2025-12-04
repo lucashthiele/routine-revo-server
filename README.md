@@ -145,29 +145,1115 @@ Flyway will automatically run new migrations on application startup.
 
 The server runs on `http://localhost:42069` by default.
 
-### Authentication Endpoints
+Base URL: `/api/v1`
 
-- `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh token
-- `POST /api/auth/logout` - User logout
+---
 
-### User Endpoints
+### Error Response Format
 
-- `GET /api/users` - List users (with pagination and filtering)
-- `GET /api/users/{id}` - Get user by ID
-- `POST /api/users` - Create new user
-- `PUT /api/users/{id}` - Update user
-- `DELETE /api/users/{id}` - Delete user
+All error responses follow this structure:
 
-### Password Reset Endpoints
+```json
+{
+  "timestamp": "2025-01-15T10:30:00",
+  "status": 400,
+  "error": "Error Type",
+  "message": "Detailed error message",
+  "path": "/api/v1/endpoint"
+}
+```
 
-- `POST /api/password-reset/request` - Request password reset
-- `POST /api/password-reset/confirm` - Confirm password reset
+#### Common Error Codes
 
-### Onboarding Endpoints
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| 400 | Bad Request | Validation errors, invalid input |
+| 401 | Unauthorized | Authentication required or failed |
+| 403 | Forbidden | Access denied - insufficient permissions |
+| 404 | Not Found | Resource not found |
+| 500 | Internal Server Error | Unexpected server error |
 
-- `POST /api/onboarding/request` - Request onboarding
-- `POST /api/onboarding/confirm` - Confirm onboarding
+---
+
+### Enums Reference
+
+#### Role
+```
+ADMIN | COACH | MEMBER
+```
+
+#### Status
+```
+PENDING | ACTIVE | INACTIVE
+```
+
+#### MuscleGroup
+```
+CHEST | BACK | SHOULDERS | BICEPS | TRICEPS | LEGS | GLUTES | ABS | CARDIO | FULL_BODY
+```
+
+---
+
+## Authentication Endpoints
+
+### POST `/api/v1/auth/login`
+Authenticate user and obtain tokens.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| email | string | Yes | Valid email format |
+| password | string | Yes | Not blank |
+
+**Response (200 OK):**
+```json
+{
+  "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "COACH"
+  }
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed (invalid email format, blank fields)
+- `401` - Invalid credentials
+
+---
+
+### POST `/api/v1/auth/refresh`
+Refresh authentication tokens.
+
+**Headers:**
+```
+X-Refresh-Token: <refresh_token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "COACH"
+  }
+}
+```
+
+**Possible Errors:**
+- `401` - Invalid or expired refresh token
+
+---
+
+## User Endpoints
+
+### POST `/api/v1/users`
+Create a new user (Admin only).
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "MEMBER",
+  "coachId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | Yes | Not blank |
+| email | string | Yes | Valid email format |
+| role | enum | Yes | ADMIN, COACH, or MEMBER |
+| coachId | UUID | No | Required if role is MEMBER |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Validation failed, duplicate email, invalid coach ID
+- `401` - Authentication required
+- `403` - Access denied
+
+---
+
+### GET `/api/v1/users`
+List users with pagination and filtering.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| name | string | No | - | Filter by name (partial match) |
+| role | enum | No | - | Filter by role |
+| status | enum | No | - | Filter by status |
+| page | integer | No | 0 | Page number (0-indexed) |
+| size | integer | No | 10 | Page size |
+
+**Response (200 OK):**
+```json
+{
+  "users": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "coachId": "550e8400-e29b-41d4-a716-446655440001",
+      "workoutPerWeek": 3
+    }
+  ],
+  "total": 100,
+  "page": 0,
+  "size": 10,
+  "totalPages": 10
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+
+---
+
+### GET `/api/v1/users/{id}`
+Get user by ID.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | User ID |
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "MEMBER",
+  "status": "ACTIVE",
+  "coachId": "550e8400-e29b-41d4-a716-446655440001",
+  "workoutPerWeek": 3
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - User not found
+
+---
+
+### PUT `/api/v1/users/{id}`
+Update user information.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | User ID |
+
+**Request Body:**
+```json
+{
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | Yes | Not blank |
+| email | string | Yes | Valid email format |
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com",
+  "role": "MEMBER",
+  "status": "ACTIVE",
+  "coachId": "550e8400-e29b-41d4-a716-446655440001",
+  "workoutPerWeek": 3
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed, duplicate email
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - User not found
+
+---
+
+### DELETE `/api/v1/users/{id}`
+Inactivate a user (soft delete).
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | User ID |
+
+**Response (204 No Content):** Empty body
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - User not found
+
+---
+
+### PATCH `/api/v1/users/{userId}/coach`
+Link a coach to a member.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userId | UUID | Yes | Member's user ID |
+
+**Request Body:**
+```json
+{
+  "coachId": "550e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| coachId | UUID | Yes | Not null, must be a COACH role user |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Invalid coach (user is not a COACH)
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - User or coach not found
+
+---
+
+### GET `/api/v1/users/members`
+Search active members.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| name | string | No | - | Filter by name (partial match) |
+| page | integer | No | 0 | Page number (0-indexed) |
+| size | integer | No | 10 | Page size |
+
+**Response (200 OK):**
+```json
+{
+  "users": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Alice Member",
+      "email": "alice@example.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "coachId": "550e8400-e29b-41d4-a716-446655440001",
+      "workoutPerWeek": 4
+    }
+  ],
+  "total": 50,
+  "page": 0,
+  "size": 10,
+  "totalPages": 5
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+
+---
+
+## Profile Endpoints
+
+### GET `/api/v1/me`
+Get authenticated user's profile.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "MEMBER",
+  "status": "ACTIVE",
+  "coachId": "550e8400-e29b-41d4-a716-446655440001",
+  "workoutPerWeek": 3,
+  "adherenceRate": 85.5
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+
+---
+
+### PUT `/api/v1/me`
+Update authenticated user's profile.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "John Doe Updated"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | Yes | 2-100 characters |
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "John Doe Updated",
+  "email": "john@example.com",
+  "role": "MEMBER",
+  "status": "ACTIVE",
+  "coachId": "550e8400-e29b-41d4-a716-446655440001",
+  "workoutPerWeek": 3,
+  "adherenceRate": 85.5
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+
+---
+
+## Exercise Endpoints
+
+### POST `/api/v1/exercises`
+Create a new exercise (multipart/form-data).
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| data | JSON string | Yes | Exercise data (see below) |
+| file | File | No | Exercise image (JPEG, PNG, GIF, WebP) |
+
+**data JSON:**
+```json
+{
+  "name": "Bench Press",
+  "muscleGroup": "CHEST",
+  "description": "A compound chest exercise",
+  "equipment": "Barbell, Bench"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | Yes | Not blank |
+| muscleGroup | enum | Yes | Valid MuscleGroup |
+| description | string | No | - |
+| equipment | string | No | - |
+
+**Response (201 Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Exercise created successfully"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed (missing name or muscle group)
+- `401` - Authentication required
+- `403` - Access denied
+
+---
+
+### GET `/api/v1/exercises`
+Search exercises with pagination and filtering.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| name | string | No | - | Filter by name (partial match) |
+| muscleGroup | enum | No | - | Filter by muscle group |
+| page | integer | No | 0 | Page number (0-indexed) |
+| size | integer | No | 10 | Page size |
+
+**Response (200 OK):**
+```json
+{
+  "exercises": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Bench Press",
+      "muscleGroup": "CHEST",
+      "description": "A compound chest exercise",
+      "equipment": "Barbell, Bench",
+      "imageUrl": "https://storage.example.com/exercises/bench-press.jpg",
+      "createdAt": "2025-01-15T10:30:00",
+      "updatedAt": "2025-01-15T10:30:00"
+    }
+  ],
+  "total": 100,
+  "page": 0,
+  "size": 10,
+  "totalPages": 10
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+
+---
+
+### GET `/api/v1/exercises/{id}`
+Get exercise by ID.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Exercise ID |
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Bench Press",
+  "muscleGroup": "CHEST",
+  "description": "A compound chest exercise",
+  "equipment": "Barbell, Bench",
+  "imageUrl": "https://storage.example.com/exercises/bench-press.jpg",
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T10:30:00"
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `404` - Exercise not found
+
+---
+
+### PUT `/api/v1/exercises/{id}`
+Update an exercise (multipart/form-data).
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+Content-Type: multipart/form-data
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Exercise ID |
+
+**Form Data:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| data | JSON string | Yes | Exercise data (see below) |
+| file | File | No | New exercise image |
+
+**data JSON:**
+```json
+{
+  "name": "Incline Bench Press",
+  "muscleGroup": "CHEST",
+  "description": "An incline variation",
+  "equipment": "Barbell, Incline Bench"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Incline Bench Press",
+  "muscleGroup": "CHEST",
+  "description": "An incline variation",
+  "equipment": "Barbell, Incline Bench",
+  "imageUrl": "https://storage.example.com/exercises/incline-bench.jpg",
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T11:00:00"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Exercise not found
+
+---
+
+### DELETE `/api/v1/exercises/{id}`
+Delete an exercise.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Exercise ID |
+
+**Response (204 No Content):** Empty body
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Exercise not found
+
+---
+
+## Routine Endpoints
+
+### POST `/api/v1/routines`
+Create a new routine.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "Push Day Routine",
+  "description": "Chest, shoulders, and triceps workout",
+  "expirationDate": "2025-06-01T00:00:00Z",
+  "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "items": [
+    {
+      "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+      "sets": 4,
+      "reps": "8-10",
+      "load": 60.0,
+      "restTime": "90s",
+      "sequenceOrder": 1
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | Yes | Not blank |
+| description | string | No | - |
+| expirationDate | ISO timestamp | No | - |
+| creatorId | UUID | Yes | Not null |
+| memberId | UUID | No | - |
+| items | array | No | Valid items array |
+
+**Routine Item:**
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| exerciseId | UUID | Yes | Not null |
+| sets | integer | Yes | Not null |
+| reps | string | Yes | Not null |
+| load | double | No | - |
+| restTime | string | No | - |
+| sequenceOrder | integer | Yes | Not null |
+
+**Response (201 Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440100",
+  "message": "Routine created successfully"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Exercise not found
+
+---
+
+### GET `/api/v1/routines/{id}`
+Get routine by ID.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Routine ID |
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440100",
+  "name": "Push Day Routine",
+  "description": "Chest, shoulders, and triceps workout",
+  "expirationDate": "2025-06-01T00:00:00Z",
+  "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440200",
+      "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+      "exerciseName": "Bench Press",
+      "exerciseImageUrl": "https://storage.example.com/exercises/bench.jpg",
+      "sets": 4,
+      "reps": "8-10",
+      "load": 60.0,
+      "restTime": "90s",
+      "sequenceOrder": 1
+    }
+  ],
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T10:30:00"
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `404` - Routine not found
+
+---
+
+### PUT `/api/v1/routines/{id}`
+Update a routine.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Routine ID |
+
+**Request Body:**
+```json
+{
+  "name": "Push Day Routine (Updated)",
+  "description": "Updated description",
+  "expirationDate": "2025-07-01T00:00:00Z",
+  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "items": [
+    {
+      "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+      "sets": 5,
+      "reps": "6-8",
+      "load": 70.0,
+      "restTime": "120s",
+      "sequenceOrder": 1
+    }
+  ]
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440100",
+  "name": "Push Day Routine (Updated)",
+  "description": "Updated description",
+  "expirationDate": "2025-07-01T00:00:00Z",
+  "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "items": [...],
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T12:00:00"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Routine or exercise not found
+
+---
+
+### DELETE `/api/v1/routines/{id}`
+Delete a routine.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Routine ID |
+
+**Response (204 No Content):** Empty body
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Routine not found
+
+---
+
+### POST `/api/v1/routines/{id}/associate`
+Associate a routine with a member.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | UUID | Yes | Routine ID |
+
+**Request Body:**
+```json
+{
+  "memberId": "550e8400-e29b-41d4-a716-446655440002"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| memberId | UUID | Yes | Not null |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Routine or member not found
+
+---
+
+## Member Endpoints
+
+### GET `/api/v1/member/routines`
+Get authenticated member's routines.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440100",
+    "name": "Push Day Routine",
+    "description": "Chest, shoulders, and triceps workout",
+    "expirationDate": "2025-06-01T00:00:00Z",
+    "isExpired": false,
+    "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+    "items": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440200",
+        "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+        "exerciseName": "Bench Press",
+        "exerciseImageUrl": "https://storage.example.com/exercises/bench.jpg",
+        "sets": 4,
+        "reps": "8-10",
+        "load": 60.0,
+        "restTime": "90s",
+        "sequenceOrder": 1
+      }
+    ],
+    "createdAt": "2025-01-15T10:30:00",
+    "updatedAt": "2025-01-15T10:30:00"
+  }
+]
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+
+---
+
+### POST `/api/v1/member/workouts`
+Log a completed workout session.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Request Body:**
+```json
+{
+  "routineId": "550e8400-e29b-41d4-a716-446655440100",
+  "startedAt": "2025-01-15T09:00:00Z",
+  "endedAt": "2025-01-15T10:15:00Z",
+  "items": [
+    {
+      "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+      "setsDone": 4,
+      "repsDone": 10,
+      "loadUsed": 60.0
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| routineId | UUID | No | - |
+| startedAt | ISO timestamp | Yes | Not null |
+| endedAt | ISO timestamp | No | - |
+| items | array | Yes | At least one item required |
+
+**Workout Item:**
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| exerciseId | UUID | Yes | Not null |
+| setsDone | integer | Yes | Min 1 |
+| repsDone | integer | Yes | Min 1 |
+| loadUsed | double | No | Min 0 |
+
+**Response (201 Created):**
+```json
+{
+  "workoutSessionId": "550e8400-e29b-41d4-a716-446655440300",
+  "adherenceRate": 87.5,
+  "message": "Workout logged successfully"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed
+- `401` - Authentication required
+- `404` - Exercise or routine not found
+
+---
+
+## Report Endpoints
+
+### GET `/api/v1/reports/members/{memberId}`
+Get performance report for a member.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| memberId | UUID | Yes | Member's user ID |
+
+**Response (200 OK):**
+```json
+{
+  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "memberName": "Alice Member",
+  "memberEmail": "alice@example.com",
+  "adherenceRate": 85.5,
+  "workoutHistory": [
+    {
+      "workoutSessionId": "550e8400-e29b-41d4-a716-446655440300",
+      "date": "2025-01-15T09:00:00Z",
+      "routineName": "Push Day Routine",
+      "durationMinutes": 75
+    }
+  ]
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+- `403` - Access denied (can only view own report or assigned members)
+- `404` - Member not found
+
+---
+
+## Password Reset Endpoints
+
+### POST `/api/v1/password-reset/request`
+Request a password reset email.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| email | string | Yes | Valid email format |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Validation failed (invalid email format)
+
+> Note: For security reasons, always returns 200 even if email doesn't exist.
+
+---
+
+### POST `/api/v1/password-reset/validate-reset`
+Validate a password reset token.
+
+**Headers:**
+```
+Authorization: Bearer <reset_token>
+```
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Invalid or expired token
+
+---
+
+### POST `/api/v1/password-reset/new-password`
+Set a new password using reset token.
+
+**Headers:**
+```
+Authorization: Bearer <reset_token>
+```
+
+**Request Body:**
+```json
+{
+  "newPassword": "newSecurePassword123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| newPassword | string | Yes | 8-72 characters |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Validation failed, invalid or expired token
+
+---
+
+## Onboarding Endpoints
+
+### POST `/api/v1/onboarding/validate-onboarding`
+Validate an onboarding token.
+
+**Headers:**
+```
+Authorization: Bearer <onboarding_token>
+```
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Invalid or expired token
+
+---
+
+### POST `/api/v1/onboarding/activate-account`
+Activate user account and set password.
+
+**Headers:**
+```
+Authorization: Bearer <onboarding_token>
+```
+
+**Request Body:**
+```json
+{
+  "password": "securePassword123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| password | string | Yes | 8-72 characters |
+
+**Response (200 OK):** Empty body
+
+**Possible Errors:**
+- `400` - Validation failed, invalid or expired token
 
 ## Building for Production
 
