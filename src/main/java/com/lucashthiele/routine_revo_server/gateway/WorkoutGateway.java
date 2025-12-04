@@ -14,6 +14,15 @@ public interface WorkoutGateway {
   
   List<WorkoutSession> findByMemberId(UUID memberId);
   
+  /**
+   * Fetches the most recent workout sessions for a member, ordered by endedAt descending.
+   * 
+   * @param memberId the member's UUID
+   * @param limit maximum number of sessions to return
+   * @return list of recent workout sessions
+   */
+  List<WorkoutSession> findRecentByMemberId(UUID memberId, int limit);
+  
   long countWorkoutsByMemberSince(UUID memberId, Instant since);
 }
 

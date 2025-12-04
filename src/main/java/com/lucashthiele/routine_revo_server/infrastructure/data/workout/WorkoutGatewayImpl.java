@@ -4,6 +4,7 @@ import com.lucashthiele.routine_revo_server.domain.workout.WorkoutSession;
 import com.lucashthiele.routine_revo_server.gateway.WorkoutGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +68,25 @@ public class WorkoutGatewayImpl implements WorkoutGateway {
         .collect(Collectors.toList());
     
     LOGGER.debug("Found {} workout sessions for member ID: {}", sessions.size(), memberId);
+    
+    return sessions;
+  }
+  
+  @Override
+  @Transactional(readOnly = true)
+  public List<WorkoutSession> findRecentByMemberId(UUID memberId, int limit) {
+    LOGGER.debug("Fetching {} most recent workout sessions for member ID: {}", limit, memberId);
+    
+    List<WorkoutSessionData> dataList = workoutRepository.findRecentByMemberId(
+        memberId, 
+        PageRequest.of(0, limit)
+    );
+    
+    List<WorkoutSession> sessions = dataList.stream()
+        .map(workoutDataMapper::toDomain)
+        .collect(Collectors.toList());
+    
+    LOGGER.debug("Found {} recent workout sessions for member ID: {}", sessions.size(), memberId);
     
     return sessions;
   }

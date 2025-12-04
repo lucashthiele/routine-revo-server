@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.workout;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,6 +24,12 @@ public interface WorkoutJpaRepository extends JpaRepository<WorkoutSessionData, 
          "WHERE ws.member.id = :memberId " +
          "ORDER BY ws.startedAt DESC")
   List<WorkoutSessionData> findAllByMemberId(@Param("memberId") UUID memberId);
+  
+  @Query("SELECT ws FROM WorkoutSessionData ws " +
+         "LEFT JOIN FETCH ws.items " +
+         "WHERE ws.member.id = :memberId " +
+         "ORDER BY ws.endedAt DESC")
+  List<WorkoutSessionData> findRecentByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
   
   @Query("SELECT COUNT(ws) FROM WorkoutSessionData ws " +
          "WHERE ws.member.id = :memberId " +

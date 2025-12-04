@@ -68,6 +68,13 @@ public class StandaloneDataSeeder {
   private static final UUID WORKOUT_SESSION_4 = UUID.fromString("30000000-0000-0000-0000-000000000004");
   private static final UUID WORKOUT_SESSION_5 = UUID.fromString("30000000-0000-0000-0000-000000000005");
   private static final UUID WORKOUT_SESSION_6 = UUID.fromString("30000000-0000-0000-0000-000000000006");
+  // Additional sessions for Epic 5 (Performance Report testing)
+  private static final UUID WORKOUT_SESSION_7 = UUID.fromString("30000000-0000-0000-0000-000000000007");
+  private static final UUID WORKOUT_SESSION_8 = UUID.fromString("30000000-0000-0000-0000-000000000008");
+  private static final UUID WORKOUT_SESSION_9 = UUID.fromString("30000000-0000-0000-0000-000000000009");
+  private static final UUID WORKOUT_SESSION_10 = UUID.fromString("30000000-0000-0000-0000-000000000010");
+  private static final UUID WORKOUT_SESSION_11 = UUID.fromString("30000000-0000-0000-0000-000000000011");
+  private static final UUID WORKOUT_SESSION_12 = UUID.fromString("30000000-0000-0000-0000-000000000012");
   
   public static void main(String[] args) {
     System.out.println("========================================");
@@ -162,10 +169,19 @@ public class StandaloneDataSeeder {
       System.out.println("    - Cardio & Abs (Bob)");
       System.out.println();
       System.out.println("Workout Sessions:");
-      System.out.println("  6 sample workout sessions created:");
-      System.out.println("    - Alice: 4 sessions (Upper Body x2, Lower Body x2)");
-      System.out.println("    - Bob: 2 sessions (Full Body x1, Cardio & Abs x1)");
+      System.out.println("  12 sample workout sessions created:");
+      System.out.println("    - Alice: 7 sessions (Upper Body x4, Lower Body x3)");
+      System.out.println("      Adherence Rate: 54.26%");
+      System.out.println("    - Bob: 5 sessions (Full Body x3, Cardio & Abs x2)");
+      System.out.println("      Adherence Rate: 29.24%");
       System.out.println("  Adherence rates updated based on workout history");
+      System.out.println();
+      System.out.println("Epic 5 Testing (Performance Reports & Profile):");
+      System.out.println("  GET /api/v1/reports/members/{memberId} - Performance Report");
+      System.out.println("    - Test with Alice ID: 00000000-0000-0000-0000-000000000004");
+      System.out.println("    - Test with Bob ID:   00000000-0000-0000-0000-000000000005");
+      System.out.println("  GET /api/v1/me - Get Own Profile");
+      System.out.println("  PUT /api/v1/me - Update Own Profile (name only)");
       System.out.println();
       
     } catch (SQLException e) {
@@ -798,23 +814,106 @@ public class StandaloneDataSeeder {
       System.out.println("    ✓ Added 4 exercises to session");
       
       // ==========================================
+      // Additional ALICE's Workout Sessions for Epic 5 Report Testing
+      // ==========================================
+      
+      // Session 7: Upper Body - 17 days ago
+      LocalDateTime session7Start = now.minusDays(17).withHour(10).withMinute(0);
+      LocalDateTime session7End = session7Start.plusMinutes(65);
+      insertWorkoutSession(conn, WORKOUT_SESSION_7, ALICE_MEMBER_ID, ROUTINE_UPPER_BODY,
+          session7Start, session7End);
+      System.out.println("  ✓ Created workout session: Alice - Upper Body (17 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_7, EXERCISE_BENCH_PRESS, 4, 9, 57.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_7, EXERCISE_BARBELL_ROW, 4, 10, 52.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_7, EXERCISE_FACE_PULL, 3, 15, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_7, EXERCISE_TRICEP_DIPS, 3, 12, null);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // Session 8: Lower Body - 21 days ago
+      LocalDateTime session8Start = now.minusDays(21).withHour(16).withMinute(0);
+      LocalDateTime session8End = session8Start.plusMinutes(70);
+      insertWorkoutSession(conn, WORKOUT_SESSION_8, ALICE_MEMBER_ID, ROUTINE_LOWER_BODY,
+          session8Start, session8End);
+      System.out.println("  ✓ Created workout session: Alice - Lower Body (21 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_8, EXERCISE_SQUAT, 5, 7, 77.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_8, EXERCISE_LEG_PRESS, 4, 11, 115.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_8, EXERCISE_LUNGES, 3, 14, 12.5);
+      System.out.println("    ✓ Added 3 exercises to session");
+      
+      // Session 9: Upper Body - 25 days ago
+      LocalDateTime session9Start = now.minusDays(25).withHour(9).withMinute(30);
+      LocalDateTime session9End = session9Start.plusMinutes(58);
+      insertWorkoutSession(conn, WORKOUT_SESSION_9, ALICE_MEMBER_ID, ROUTINE_UPPER_BODY,
+          session9Start, session9End);
+      System.out.println("  ✓ Created workout session: Alice - Upper Body (25 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_9, EXERCISE_BENCH_PRESS, 4, 8, 55.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_9, EXERCISE_CABLE_FLY, 3, 12, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_9, EXERCISE_HAMMER_CURL, 3, 12, 12.5);
+      System.out.println("    ✓ Added 3 exercises to session");
+      
+      // ==========================================
+      // Additional BOB's Workout Sessions for Epic 5 Report Testing
+      // ==========================================
+      
+      // Session 10: Full Body - 12 days ago
+      LocalDateTime session10Start = now.minusDays(12).withHour(6).withMinute(0);
+      LocalDateTime session10End = session10Start.plusMinutes(85);
+      insertWorkoutSession(conn, WORKOUT_SESSION_10, BOB_MEMBER_ID, ROUTINE_FULL_BODY,
+          session10Start, session10End);
+      System.out.println("  ✓ Created workout session: Bob - Full Body (12 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_10, EXERCISE_DEADLIFT, 4, 7, 87.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_10, EXERCISE_SQUAT, 4, 9, 67.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_10, EXERCISE_SHOULDER_PRESS, 3, 11, 32.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_10, EXERCISE_PLANK, 3, 50, null);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // Session 11: Cardio & Abs - 18 days ago
+      LocalDateTime session11Start = now.minusDays(18).withHour(7).withMinute(0);
+      LocalDateTime session11End = session11Start.plusMinutes(40);
+      insertWorkoutSession(conn, WORKOUT_SESSION_11, BOB_MEMBER_ID, ROUTINE_CARDIO_ABS,
+          session11Start, session11End);
+      System.out.println("  ✓ Created workout session: Bob - Cardio & Abs (18 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_11, EXERCISE_CYCLING, 1, 15, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_11, EXERCISE_BURPEES, 3, 12, null);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_11, EXERCISE_CRUNCHES, 4, 20, null);
+      System.out.println("    ✓ Added 3 exercises to session");
+      
+      // Session 12: Full Body - 24 days ago
+      LocalDateTime session12Start = now.minusDays(24).withHour(17).withMinute(30);
+      LocalDateTime session12End = session12Start.plusMinutes(95);
+      insertWorkoutSession(conn, WORKOUT_SESSION_12, BOB_MEMBER_ID, ROUTINE_FULL_BODY,
+          session12Start, session12End);
+      System.out.println("  ✓ Created workout session: Bob - Full Body (24 days ago)");
+      
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_12, EXERCISE_DEADLIFT, 4, 6, 85.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_12, EXERCISE_BENCH_PRESS, 3, 9, 52.5);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_12, EXERCISE_SQUAT, 4, 8, 65.0);
+      insertWorkoutItem(conn, UUID.randomUUID(), WORKOUT_SESSION_12, EXERCISE_PULL_UP, 3, 5, null);
+      System.out.println("    ✓ Added 4 exercises to session");
+      
+      // ==========================================
       // Update adherence rates for members
       // ==========================================
       System.out.println("  Calculating adherence rates...");
       
-      // Alice: 4 workouts in 30 days, target is 3/week (~12.9 expected)
-      // Adherence = (4 / 12.9) * 100 ≈ 31%
-      updateUserAdherenceRate(conn, ALICE_MEMBER_ID, 31.01);
-      System.out.println("    ✓ Alice adherence rate: 31.01%");
+      // Alice: 7 workouts in 30 days, target is 3/week (~12.9 expected)
+      // Adherence = (7 / 12.9) * 100 ≈ 54.3%
+      updateUserAdherenceRate(conn, ALICE_MEMBER_ID, 54.26);
+      System.out.println("    ✓ Alice adherence rate: 54.26%");
       
-      // Bob: 2 workouts in 30 days, target is 4/week (~17.1 expected)
-      // Adherence = (2 / 17.1) * 100 ≈ 11.7%
-      updateUserAdherenceRate(conn, BOB_MEMBER_ID, 11.70);
-      System.out.println("    ✓ Bob adherence rate: 11.70%");
+      // Bob: 5 workouts in 30 days, target is 4/week (~17.1 expected)
+      // Adherence = (5 / 17.1) * 100 ≈ 29.2%
+      updateUserAdherenceRate(conn, BOB_MEMBER_ID, 29.24);
+      System.out.println("    ✓ Bob adherence rate: 29.24%");
       
       // Commit transaction
       conn.commit();
-      System.out.println("  ✓ Successfully seeded 6 workout sessions with 23 total exercises logged");
+      System.out.println("  ✓ Successfully seeded 12 workout sessions with 44 total exercises logged");
       
     } catch (SQLException e) {
       // Rollback on error
