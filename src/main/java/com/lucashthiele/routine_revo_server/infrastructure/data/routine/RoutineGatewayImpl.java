@@ -1,12 +1,17 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.routine;
 
 import com.lucashthiele.routine_revo_server.domain.routine.Routine;
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineFilter;
+import com.lucashthiele.routine_revo_server.domain.shared.PaginatedResult;
 import com.lucashthiele.routine_revo_server.gateway.RoutineGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -137,6 +142,41 @@ public class RoutineGatewayImpl implements RoutineGateway {
     LOGGER.info("Routine updated successfully with ID: {}", updatedRoutineData.getId());
     
     return routineDataMapper.toDomain(updatedRoutineData);
+  }
+  
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResult<Routine> findAll(RoutineFilter filter, int page, int size) {
+    LOGGER.debug("Fetching routines with filter - creatorId: {}, memberId: {}, isExpired: {}, templatesOnly: {}, page: {}, size: {}",
+        filter.creatorId(), filter.memberId(), filter.isExpired(), filter.templatesOnly(), page, size);
+    
+    boolean checkExpired = filter.isExpired() != null;
+    boolean isExpired = filter.isExpired() != null && filter.isExpired();
+    boolean templatesOnly = filter.templatesOnly() != null && filter.templatesOnly();
+    
+    Page<RoutineData> routinePage = routineRepository.findAllWithFilters(
+        filter.creatorId(),
+        filter.memberId(),
+        templatesOnly,
+        checkExpired,
+        isExpired,
+        Instant.now(),
+        PageRequest.of(page, size)
+    );
+    
+    List<Routine> routines = routinePage.getContent().stream()
+        .map(routineDataMapper::toDomain)
+        .collect(Collectors.toList());
+    
+    LOGGER.debug("Found {} routines out of {} total", routines.size(), routinePage.getTotalElements());
+    
+    return new PaginatedResult<>(
+        routines,
+        routinePage.getTotalElements(),
+        routinePage.getNumber(),
+        routinePage.getSize(),
+        routinePage.getTotalPages()
+    );
   }
 }
 

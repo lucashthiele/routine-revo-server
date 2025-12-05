@@ -5,14 +5,10 @@ import com.lucashthiele.routine_revo_server.gateway.RoutineGateway;
 import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
 import com.lucashthiele.routine_revo_server.usecase.routine.exception.RoutineNotFoundException;
 import com.lucashthiele.routine_revo_server.usecase.routine.input.GetRoutineInput;
-import com.lucashthiele.routine_revo_server.usecase.routine.output.RoutineItemOutput;
 import com.lucashthiele.routine_revo_server.usecase.routine.output.RoutineOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class GetRoutineUseCase implements UseCaseInterface<RoutineOutput, GetRoutineInput> {
@@ -33,37 +29,6 @@ public class GetRoutineUseCase implements UseCaseInterface<RoutineOutput, GetRou
     
     LOGGER.info("[GetRoutineUseCase] Routine found with ID: {}", input.id());
     
-    return toOutput(routine);
-  }
-  
-  private RoutineOutput toOutput(Routine routine) {
-    List<RoutineItemOutput> itemOutputs = routine.getItems() != null
-        ? routine.getItems().stream()
-            .map(item -> new RoutineItemOutput(
-                item.getId(),
-                item.getExerciseId(),
-                item.getExerciseName(),
-                item.getExerciseImageUrl(),
-                item.getSets(),
-                item.getReps(),
-                item.getLoad(),
-                item.getRestTime(),
-                item.getSequenceOrder()
-            ))
-            .collect(Collectors.toList())
-        : List.of();
-    
-    return new RoutineOutput(
-        routine.getId(),
-        routine.getName(),
-        routine.getDescription(),
-        routine.getExpirationDate(),
-        routine.getCreatorId(),
-        routine.getMemberId(),
-        itemOutputs,
-        routine.getCreatedAt(),
-        routine.getUpdatedAt()
-    );
+    return RoutineOutput.from(routine);
   }
 }
-

@@ -3,6 +3,8 @@ package com.lucashthiele.routine_revo_server.infrastructure.web.user.dto;
 import com.lucashthiele.routine_revo_server.domain.user.Role;
 import com.lucashthiele.routine_revo_server.domain.user.Status;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record UserResponse(
@@ -12,7 +14,9 @@ public record UserResponse(
     Role role,
     Status status,
     UUID coachId,
-    Integer workoutPerWeek
+    Integer workoutPerWeek,
+    Double adherenceRate,
+    Instant lastWorkoutDate,
+    List<AssignedRoutineResponse> assignedRoutines
 ) {
 }
-

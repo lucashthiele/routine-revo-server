@@ -17,8 +17,14 @@ import com.lucashthiele.routine_revo_server.usecase.user.input.LinkCoachInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.ListUsersInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.SearchMembersInput;
 import com.lucashthiele.routine_revo_server.usecase.user.input.UpdateUserInput;
+import com.lucashthiele.routine_revo_server.usecase.user.output.AssignedRoutineOutput;
 import com.lucashthiele.routine_revo_server.usecase.user.output.ListUsersOutput;
 import com.lucashthiele.routine_revo_server.usecase.user.output.UserOutput;
+import com.lucashthiele.routine_revo_server.usecase.routine.BulkAssignRoutinesUseCase;
+import com.lucashthiele.routine_revo_server.usecase.routine.input.BulkAssignRoutinesInput;
+import com.lucashthiele.routine_revo_server.usecase.routine.output.BulkAssignRoutinesOutput;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkAssignRoutinesRequest;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkAssignRoutinesResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +47,7 @@ public class UserController {
   private final InactivateUserUseCase inactivateUserUseCase;
   private final LinkCoachUseCase linkCoachUseCase;
   private final SearchMembersUseCase searchMembersUseCase;
+  private final BulkAssignRoutinesUseCase bulkAssignRoutinesUseCase;
 
   public UserController(CreateUserUseCase createUserUseCase,
                         ListUsersUseCase listUsersUseCase,
@@ -47,7 +55,8 @@ public class UserController {
                         UpdateUserUseCase updateUserUseCase,
                         InactivateUserUseCase inactivateUserUseCase,
                         LinkCoachUseCase linkCoachUseCase,
-                        SearchMembersUseCase searchMembersUseCase) {
+                        SearchMembersUseCase searchMembersUseCase,
+                        BulkAssignRoutinesUseCase bulkAssignRoutinesUseCase) {
     this.createUserUseCase = createUserUseCase;
     this.listUsersUseCase = listUsersUseCase;
     this.getUserByIdUseCase = getUserByIdUseCase;
@@ -55,6 +64,7 @@ public class UserController {
     this.inactivateUserUseCase = inactivateUserUseCase;
     this.linkCoachUseCase = linkCoachUseCase;
     this.searchMembersUseCase = searchMembersUseCase;
+    this.bulkAssignRoutinesUseCase = bulkAssignRoutinesUseCase;
   }
   
   @PostMapping
@@ -97,7 +107,7 @@ public class UserController {
     
     ListUsersResponse response = new ListUsersResponse(
         output.users().stream()
-            .map(u -> new UserResponse(u.id(), u.name(), u.email(), u.role(), u.status(), u.coachId(), u.workoutPerWeek()))
+            .map(this::toUserResponse)
             .toList(),
         output.total(),
         output.page(),
@@ -117,15 +127,7 @@ public class UserController {
     
     UserOutput output = getUserByIdUseCase.execute(input);
     
-    UserResponse response = new UserResponse(
-        output.id(),
-        output.name(),
-        output.email(),
-        output.role(),
-        output.status(),
-        output.coachId(),
-        output.workoutPerWeek()
-    );
+    UserResponse response = toUserResponse(output);
     
     LOGGER.info("GET /api/v1/users/{} - User found and returned", id);
     return ResponseEntity.ok(response);
@@ -140,15 +142,7 @@ public class UserController {
     
     UserOutput output = updateUserUseCase.execute(input);
     
-    UserResponse response = new UserResponse(
-        output.id(),
-        output.name(),
-        output.email(),
-        output.role(),
-        output.status(),
-        output.coachId(),
-        output.workoutPerWeek()
-    );
+    UserResponse response = toUserResponse(output);
     
     LOGGER.info("PUT /api/v1/users/{} - User updated successfully", id);
     return ResponseEntity.ok(response);
@@ -193,7 +187,7 @@ public class UserController {
     
     ListUsersResponse response = new ListUsersResponse(
         output.users().stream()
-            .map(u -> new UserResponse(u.id(), u.name(), u.email(), u.role(), u.status(), u.coachId(), u.workoutPerWeek()))
+            .map(this::toUserResponse)
             .toList(),
         output.total(),
         output.page(),
@@ -203,5 +197,59 @@ public class UserController {
     
     LOGGER.info("GET /api/v1/users/members - Returning {} active members", response.users().size());
     return ResponseEntity.ok(response);
+  }
+  
+  @PostMapping("/members/{memberId}/routines/bulk")
+  public ResponseEntity<BulkAssignRoutinesResponse> bulkAssignRoutines(
+      @PathVariable UUID memberId,
+      @Valid @RequestBody BulkAssignRoutinesRequest request) {
+    LOGGER.info("POST /api/v1/users/members/{}/routines/bulk - Bulk assign routines request received", memberId);
+    
+    BulkAssignRoutinesInput input = new BulkAssignRoutinesInput(
+        memberId,
+        request.routineIds(),
+        request.expirationDate()
+    );
+    
+    BulkAssignRoutinesOutput output = bulkAssignRoutinesUseCase.execute(input);
+    
+    BulkAssignRoutinesResponse response = new BulkAssignRoutinesResponse(
+        output.assignedCount(),
+        output.message()
+    );
+    
+    LOGGER.info("POST /api/v1/users/members/{}/routines/bulk - {}", memberId, output.message());
+    return ResponseEntity.ok(response);
+  }
+  
+  private UserResponse toUserResponse(UserOutput output) {
+    List<AssignedRoutineResponse> assignedRoutines = null;
+    if (output.assignedRoutines() != null) {
+      assignedRoutines = output.assignedRoutines().stream()
+          .map(this::toAssignedRoutineResponse)
+          .toList();
+    }
+    
+    return new UserResponse(
+        output.id(),
+        output.name(),
+        output.email(),
+        output.role(),
+        output.status(),
+        output.coachId(),
+        output.workoutPerWeek(),
+        output.adherenceRate(),
+        output.lastWorkoutDate(),
+        assignedRoutines
+    );
+  }
+  
+  private AssignedRoutineResponse toAssignedRoutineResponse(AssignedRoutineOutput output) {
+    return new AssignedRoutineResponse(
+        output.id(),
+        output.name(),
+        output.expirationDate(),
+        output.isExpired()
+    );
   }
 }

@@ -323,7 +323,17 @@ Authorization: Bearer <auth_token>
       "role": "MEMBER",
       "status": "ACTIVE",
       "coachId": "550e8400-e29b-41d4-a716-446655440001",
-      "workoutPerWeek": 3
+      "workoutPerWeek": 3,
+      "adherenceRate": 85.5,
+      "lastWorkoutDate": "2025-01-15T10:30:00Z",
+      "assignedRoutines": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440100",
+          "name": "Push Day Routine",
+          "expirationDate": "2025-06-01T00:00:00Z",
+          "isExpired": false
+        }
+      ]
     }
   ],
   "total": 100,
@@ -332,6 +342,8 @@ Authorization: Bearer <auth_token>
   "totalPages": 10
 }
 ```
+
+> **Note**: `adherenceRate`, `lastWorkoutDate`, and `assignedRoutines` are only populated for users with role `MEMBER`. For other roles, these fields will be `null`.
 
 **Possible Errors:**
 - `401` - Authentication required
@@ -361,7 +373,17 @@ Authorization: Bearer <auth_token>
   "role": "MEMBER",
   "status": "ACTIVE",
   "coachId": "550e8400-e29b-41d4-a716-446655440001",
-  "workoutPerWeek": 3
+  "workoutPerWeek": 3,
+  "adherenceRate": 85.5,
+  "lastWorkoutDate": "2025-01-15T10:30:00Z",
+  "assignedRoutines": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440100",
+      "name": "Push Day Routine",
+      "expirationDate": "2025-06-01T00:00:00Z",
+      "isExpired": false
+    }
+  ]
 }
 ```
 
@@ -407,7 +429,17 @@ Authorization: Bearer <auth_token>
   "role": "MEMBER",
   "status": "ACTIVE",
   "coachId": "550e8400-e29b-41d4-a716-446655440001",
-  "workoutPerWeek": 3
+  "workoutPerWeek": 3,
+  "adherenceRate": 85.5,
+  "lastWorkoutDate": "2025-01-15T10:30:00Z",
+  "assignedRoutines": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440100",
+      "name": "Push Day Routine",
+      "expirationDate": "2025-06-01T00:00:00Z",
+      "isExpired": false
+    }
+  ]
 }
 ```
 
@@ -501,7 +533,17 @@ Authorization: Bearer <auth_token>
       "role": "MEMBER",
       "status": "ACTIVE",
       "coachId": "550e8400-e29b-41d4-a716-446655440001",
-      "workoutPerWeek": 4
+      "workoutPerWeek": 4,
+      "adherenceRate": 92.0,
+      "lastWorkoutDate": "2025-01-14T16:45:00Z",
+      "assignedRoutines": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440100",
+          "name": "Full Body Routine",
+          "expirationDate": "2025-06-01T00:00:00Z",
+          "isExpired": false
+        }
+      ]
     }
   ],
   "total": 50,
@@ -514,6 +556,52 @@ Authorization: Bearer <auth_token>
 **Possible Errors:**
 - `401` - Authentication required
 - `403` - Access denied
+
+---
+
+### POST `/api/v1/users/members/{memberId}/routines/bulk`
+Bulk assign multiple routines to a member.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| memberId | UUID | Yes | Member's user ID |
+
+**Request Body:**
+```json
+{
+  "routineIds": [
+    "550e8400-e29b-41d4-a716-446655440100",
+    "550e8400-e29b-41d4-a716-446655440101",
+    "550e8400-e29b-41d4-a716-446655440102"
+  ],
+  "expirationDate": "2025-06-01T00:00:00Z"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| routineIds | UUID[] | Yes | At least one routine ID required |
+| expirationDate | ISO timestamp | No | Applied to all routines if provided |
+
+**Response (200 OK):**
+```json
+{
+  "assignedCount": 3,
+  "message": "3 routine(s) assigned successfully to member"
+}
+```
+
+**Possible Errors:**
+- `400` - Validation failed (empty routine list)
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Member or routine not found
 
 ---
 
@@ -786,6 +874,66 @@ Authorization: Bearer <auth_token>
 
 ## Routine Endpoints
 
+### GET `/api/v1/routines`
+List routines with pagination and filtering.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| creatorId | UUID | No | - | Filter by creator |
+| memberId | UUID | No | - | Filter by assigned member |
+| isExpired | boolean | No | - | Filter by expiration status |
+| templatesOnly | boolean | No | false | Only return routines without assigned members |
+| page | integer | No | 0 | Page number (0-indexed) |
+| size | integer | No | 20 | Page size |
+
+**Response (200 OK):**
+```json
+{
+  "routines": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440100",
+      "name": "Push Day Routine",
+      "description": "Chest, shoulders, and triceps workout",
+      "expirationDate": "2025-06-01T00:00:00Z",
+      "isExpired": false,
+      "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+      "memberId": "550e8400-e29b-41d4-a716-446655440002",
+      "itemCount": 8,
+      "items": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440200",
+          "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
+          "exerciseName": "Bench Press",
+          "exerciseImageUrl": "https://storage.example.com/exercises/bench.jpg",
+          "sets": 4,
+          "reps": "8-10",
+          "load": 60.0,
+          "restTime": "90s",
+          "sequenceOrder": 1
+        }
+      ],
+      "createdAt": "2025-01-15T10:30:00",
+      "updatedAt": "2025-01-15T10:30:00"
+    }
+  ],
+  "total": 50,
+  "page": 0,
+  "size": 20,
+  "totalPages": 3
+}
+```
+
+**Possible Errors:**
+- `401` - Authentication required
+
+---
+
 ### POST `/api/v1/routines`
 Create a new routine.
 
@@ -870,8 +1018,10 @@ Authorization: Bearer <auth_token>
   "name": "Push Day Routine",
   "description": "Chest, shoulders, and triceps workout",
   "expirationDate": "2025-06-01T00:00:00Z",
+  "isExpired": false,
   "creatorId": "550e8400-e29b-41d4-a716-446655440001",
   "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "itemCount": 1,
   "items": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440200",
@@ -936,8 +1086,10 @@ Authorization: Bearer <auth_token>
   "name": "Push Day Routine (Updated)",
   "description": "Updated description",
   "expirationDate": "2025-07-01T00:00:00Z",
+  "isExpired": false,
   "creatorId": "550e8400-e29b-41d4-a716-446655440001",
   "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "itemCount": 1,
   "items": [...],
   "createdAt": "2025-01-15T10:30:00",
   "updatedAt": "2025-01-15T12:00:00"

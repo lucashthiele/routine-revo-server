@@ -3,6 +3,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.web.routine;
 import com.lucashthiele.routine_revo_server.infrastructure.web.routine.dto.*;
 import com.lucashthiele.routine_revo_server.usecase.routine.*;
 import com.lucashthiele.routine_revo_server.usecase.routine.input.*;
+import com.lucashthiele.routine_revo_server.usecase.routine.output.ListRoutinesOutput;
 import com.lucashthiele.routine_revo_server.usecase.routine.output.RoutineOutput;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -24,18 +25,57 @@ public class RoutineController {
   private final GetRoutineUseCase getRoutineUseCase;
   private final DeleteRoutineUseCase deleteRoutineUseCase;
   private final AssociateRoutineUseCase associateRoutineUseCase;
+  private final ListRoutinesUseCase listRoutinesUseCase;
   
   public RoutineController(
       CreateRoutineUseCase createRoutineUseCase,
       UpdateRoutineUseCase updateRoutineUseCase,
       GetRoutineUseCase getRoutineUseCase,
       DeleteRoutineUseCase deleteRoutineUseCase,
-      AssociateRoutineUseCase associateRoutineUseCase) {
+      AssociateRoutineUseCase associateRoutineUseCase,
+      ListRoutinesUseCase listRoutinesUseCase) {
     this.createRoutineUseCase = createRoutineUseCase;
     this.updateRoutineUseCase = updateRoutineUseCase;
     this.getRoutineUseCase = getRoutineUseCase;
     this.deleteRoutineUseCase = deleteRoutineUseCase;
     this.associateRoutineUseCase = associateRoutineUseCase;
+    this.listRoutinesUseCase = listRoutinesUseCase;
+  }
+  
+  @GetMapping
+  public ResponseEntity<ListRoutinesResponse> listRoutines(
+      @RequestParam(required = false) UUID creatorId,
+      @RequestParam(required = false) UUID memberId,
+      @RequestParam(required = false) Boolean isExpired,
+      @RequestParam(required = false) Boolean templatesOnly,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
+    LOGGER.info("GET /api/v1/routines - List routines request received");
+    
+    ListRoutinesInput input = new ListRoutinesInput(
+        creatorId,
+        memberId,
+        isExpired,
+        templatesOnly,
+        page,
+        size
+    );
+    
+    ListRoutinesOutput output = listRoutinesUseCase.execute(input);
+    
+    ListRoutinesResponse response = new ListRoutinesResponse(
+        output.routines().stream()
+            .map(this::toResponse)
+            .toList(),
+        output.total(),
+        output.page(),
+        output.size(),
+        output.totalPages()
+    );
+    
+    LOGGER.info("GET /api/v1/routines - Returning {} routines", response.routines().size());
+    
+    return ResponseEntity.ok(response);
   }
   
   @PostMapping
@@ -150,8 +190,10 @@ public class RoutineController {
         output.name(),
         output.description(),
         output.expirationDate(),
+        output.isExpired(),
         output.creatorId(),
         output.memberId(),
+        output.itemCount(),
         output.items() != null
             ? output.items().stream()
                 .map(item -> new RoutineItemResponse(
@@ -172,4 +214,3 @@ public class RoutineController {
     );
   }
 }
-

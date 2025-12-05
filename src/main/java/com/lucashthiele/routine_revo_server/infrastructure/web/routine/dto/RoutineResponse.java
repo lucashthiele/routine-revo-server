@@ -10,11 +10,12 @@ public record RoutineResponse(
     String name,
     String description,
     Instant expirationDate,
+    Boolean isExpired,
     UUID creatorId,
     UUID memberId,
+    Integer itemCount,
     List<RoutineItemResponse> items,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
 }
-
