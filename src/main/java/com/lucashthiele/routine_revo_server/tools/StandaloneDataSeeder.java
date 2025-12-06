@@ -29,10 +29,6 @@ public class StandaloneDataSeeder {
   private static final UUID BOB_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000005");
   private static final UUID CHARLIE_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000006");
   private static final UUID DAVID_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000007");
-  // New members without routines (for testing "Novo Cliente" badge)
-  private static final UUID EMMA_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000008");
-  private static final UUID FRANK_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000009");
-  private static final UUID GRACE_MEMBER_ID = UUID.fromString("00000000-0000-0000-0000-000000000010");
   
   // Exercises
   private static final UUID EXERCISE_BENCH_PRESS = UUID.fromString("10000000-0000-0000-0000-000000000001");
@@ -145,21 +141,11 @@ public class StandaloneDataSeeder {
       System.out.println("    Email: sarah.coach@routinerevo.com");
       System.out.println("    Password: coach123");
       System.out.println();
-      System.out.println("  Members (with routines assigned):");
+      System.out.println("  Members:");
       System.out.println("    Email: alice.member@routinerevo.com");
       System.out.println("    Password: member123");
       System.out.println();
       System.out.println("    Email: bob.member@routinerevo.com");
-      System.out.println("    Password: member123");
-      System.out.println();
-      System.out.println("  Members (NO routines - for 'Novo Cliente' testing):");
-      System.out.println("    Email: emma.newcomer@routinerevo.com");
-      System.out.println("    Password: member123");
-      System.out.println();
-      System.out.println("    Email: frank.beginner@routinerevo.com");
-      System.out.println("    Password: member123");
-      System.out.println();
-      System.out.println("    Email: grace.starter@routinerevo.com");
       System.out.println("    Password: member123");
       System.out.println();
       System.out.println("Exercises:");
@@ -196,13 +182,6 @@ public class StandaloneDataSeeder {
       System.out.println("    - Test with Bob ID:   00000000-0000-0000-0000-000000000005");
       System.out.println("  GET /api/v1/me - Get Own Profile");
       System.out.println("  PUT /api/v1/me - Update Own Profile (name only)");
-      System.out.println();
-      System.out.println("Client Management Testing ('Novo Cliente' badge):");
-      System.out.println("  Members WITHOUT routines (should show 'Novo Cliente' badge):");
-      System.out.println("    - Emma ID:  00000000-0000-0000-0000-000000000008");
-      System.out.println("    - Frank ID: 00000000-0000-0000-0000-000000000009");
-      System.out.println("    - Grace ID: 00000000-0000-0000-0000-000000000010");
-      System.out.println("  All assigned to John Coach for testing coach's client list");
       System.out.println();
       
     } catch (SQLException e) {
@@ -323,22 +302,9 @@ public class StandaloneDataSeeder {
           hashPassword("member123"), "MEMBER", "INACTIVE", SARAH_COACH_ID, 3);
       System.out.println("  ✓ Created inactive member user: david.member@routinerevo.com");
       
-      // New members without routines assigned (for testing "Novo Cliente" badge)
-      insertUser(conn, EMMA_MEMBER_ID, "Emma Newcomer", "emma.newcomer@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 3);
-      System.out.println("  ✓ Created new member (no routines): emma.newcomer@routinerevo.com");
-      
-      insertUser(conn, FRANK_MEMBER_ID, "Frank Beginner", "frank.beginner@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 4);
-      System.out.println("  ✓ Created new member (no routines): frank.beginner@routinerevo.com");
-      
-      insertUser(conn, GRACE_MEMBER_ID, "Grace Starter", "grace.starter@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 5);
-      System.out.println("  ✓ Created new member (no routines): grace.starter@routinerevo.com");
-      
       // Commit transaction
       conn.commit();
-      System.out.println("  ✓ Successfully seeded 10 users");
+      System.out.println("  ✓ Successfully seeded 7 users");
       
     } catch (SQLException e) {
       // Rollback on error
