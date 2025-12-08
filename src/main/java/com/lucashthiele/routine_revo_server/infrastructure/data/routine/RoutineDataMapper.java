@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.infrastructure.data.routine;
 
 import com.lucashthiele.routine_revo_server.domain.routine.Routine;
 import com.lucashthiele.routine_revo_server.domain.routine.RoutineItem;
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import com.lucashthiele.routine_revo_server.infrastructure.data.exercise.ExerciseData;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.UserData;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,8 @@ public class RoutineDataMapper {
         .expirationDate(routineData.getExpirationDate())
         .creatorId(routineData.getCreator() != null ? routineData.getCreator().getId() : null)
         .memberId(routineData.getMember() != null ? routineData.getMember().getId() : null)
+        .routineType(routineData.getRoutineType() != null ? routineData.getRoutineType() : RoutineType.CUSTOM)
+        .templateId(routineData.getTemplateId())
         .items(items)
         .createdAt(routineData.getCreatedAt())
         .updatedAt(routineData.getUpdatedAt())
@@ -57,6 +60,12 @@ public class RoutineDataMapper {
       member.setId(routine.getMemberId());
       routineData.setMember(member);
     }
+    
+    // Set routine type (default to CUSTOM if not specified)
+    routineData.setRoutineType(routine.getRoutineType() != null ? routine.getRoutineType() : RoutineType.CUSTOM);
+    
+    // Set template reference
+    routineData.setTemplateId(routine.getTemplateId());
     
     // Convert items
     if (routine.getItems() != null) {

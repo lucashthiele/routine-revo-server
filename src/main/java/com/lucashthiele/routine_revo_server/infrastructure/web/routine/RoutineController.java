@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.routine;
 
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import com.lucashthiele.routine_revo_server.infrastructure.web.routine.dto.*;
 import com.lucashthiele.routine_revo_server.usecase.routine.*;
 import com.lucashthiele.routine_revo_server.usecase.routine.input.*;
@@ -47,7 +48,7 @@ public class RoutineController {
       @RequestParam(required = false) UUID creatorId,
       @RequestParam(required = false) UUID memberId,
       @RequestParam(required = false) Boolean isExpired,
-      @RequestParam(required = false) Boolean templatesOnly,
+      @RequestParam(required = false) RoutineType routineType,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
     LOGGER.info("GET /api/v1/routines - List routines request received");
@@ -56,7 +57,7 @@ public class RoutineController {
         creatorId,
         memberId,
         isExpired,
-        templatesOnly,
+        routineType,
         page,
         size
     );
@@ -88,6 +89,7 @@ public class RoutineController {
         request.expirationDate(),
         request.creatorId(),
         request.memberId(),
+        request.routineType(),
         request.items() != null
             ? request.items().stream()
                 .map(item -> new RoutineItemInput(
@@ -171,17 +173,18 @@ public class RoutineController {
   }
   
   @PostMapping("/{id}/associate")
-  public ResponseEntity<Void> associateRoutine(
+  public ResponseEntity<CreateRoutineResponse> associateRoutine(
       @PathVariable UUID id,
       @Valid @RequestBody AssociateRoutineRequest request) {
     LOGGER.info("POST /api/v1/routines/{}/associate - Associate routine request received", id);
     
     AssociateRoutineInput input = new AssociateRoutineInput(id, request.memberId());
-    associateRoutineUseCase.execute(input);
+    UUID newRoutineId = associateRoutineUseCase.execute(input);
     
-    LOGGER.info("POST /api/v1/routines/{}/associate - Routine associated successfully", id);
+    LOGGER.info("POST /api/v1/routines/{}/associate - Routine copy {} created and associated successfully", id, newRoutineId);
     
-    return ResponseEntity.ok().build();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(new CreateRoutineResponse(newRoutineId, "Routine assigned successfully"));
   }
   
   private RoutineResponse toResponse(RoutineOutput output) {
@@ -193,6 +196,8 @@ public class RoutineController {
         output.isExpired(),
         output.creatorId(),
         output.memberId(),
+        output.routineType(),
+        output.templateId(),
         output.itemCount(),
         output.items() != null
             ? output.items().stream()

@@ -46,6 +46,15 @@ public class UserSpecifications {
         );
       }
       
+      if (filter.coachId() != null) {
+        predicates.add(
+            criteriaBuilder.equal(
+                root.get("coach").get("id"),
+                filter.coachId()
+            )
+        );
+      }
+      
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
   }

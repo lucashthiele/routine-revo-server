@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.routine;
 
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +25,7 @@ public interface RoutineJpaRepository extends JpaRepository<RoutineData, UUID> {
   @Query(value = "SELECT r FROM RoutineData r " +
          "WHERE (:creatorId IS NULL OR r.creator.id = :creatorId) " +
          "AND (:memberId IS NULL OR r.member.id = :memberId) " +
-         "AND (:templatesOnly = false OR r.member IS NULL) " +
+         "AND (:routineType IS NULL OR r.routineType = :routineType) " +
          "AND (:checkExpired = false OR " +
               "(:isExpired = true AND r.expirationDate IS NOT NULL AND r.expirationDate < :now) OR " +
               "(:isExpired = false AND (r.expirationDate IS NULL OR r.expirationDate >= :now))) " +
@@ -32,17 +33,20 @@ public interface RoutineJpaRepository extends JpaRepository<RoutineData, UUID> {
          countQuery = "SELECT COUNT(r) FROM RoutineData r " +
          "WHERE (:creatorId IS NULL OR r.creator.id = :creatorId) " +
          "AND (:memberId IS NULL OR r.member.id = :memberId) " +
-         "AND (:templatesOnly = false OR r.member IS NULL) " +
+         "AND (:routineType IS NULL OR r.routineType = :routineType) " +
          "AND (:checkExpired = false OR " +
               "(:isExpired = true AND r.expirationDate IS NOT NULL AND r.expirationDate < :now) OR " +
               "(:isExpired = false AND (r.expirationDate IS NULL OR r.expirationDate >= :now)))")
   Page<RoutineData> findAllWithFilters(
       @Param("creatorId") UUID creatorId,
       @Param("memberId") UUID memberId,
-      @Param("templatesOnly") boolean templatesOnly,
+      @Param("routineType") RoutineType routineType,
       @Param("checkExpired") boolean checkExpired,
       @Param("isExpired") boolean isExpired,
       @Param("now") Instant now,
       Pageable pageable
   );
+  
+  @Query("SELECT DISTINCT r FROM RoutineData r JOIN r.items i WHERE i.exercise.id = :exerciseId")
+  List<RoutineData> findAllByExerciseId(@Param("exerciseId") UUID exerciseId);
 }

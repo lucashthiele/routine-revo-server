@@ -1,5 +1,7 @@
 package com.lucashthiele.routine_revo_server.usecase.routine.input;
 
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +12,7 @@ public record CreateRoutineInput(
     Instant expirationDate,
     UUID creatorId,
     UUID memberId,
+    RoutineType routineType,
     List<RoutineItemInput> items
 ) {
 }

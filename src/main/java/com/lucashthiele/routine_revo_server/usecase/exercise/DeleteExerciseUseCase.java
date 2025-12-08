@@ -4,11 +4,14 @@ import com.lucashthiele.routine_revo_server.domain.exercise.Exercise;
 import com.lucashthiele.routine_revo_server.gateway.ExerciseGateway;
 import com.lucashthiele.routine_revo_server.gateway.StorageGateway;
 import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
+import com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseInUseException;
 import com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseNotFoundException;
 import com.lucashthiele.routine_revo_server.usecase.exercise.input.DeleteExerciseInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class DeleteExerciseUseCase implements UseCaseInterface<Void, DeleteExerciseInput> {
@@ -29,6 +32,14 @@ public class DeleteExerciseUseCase implements UseCaseInterface<Void, DeleteExerc
     // Fetch existing exercise to get image URL
     Exercise exercise = exerciseGateway.findById(input.id())
         .orElseThrow(() -> new ExerciseNotFoundException(input.id()));
+    
+    // Check if exercise is being used in any routine
+    List<String> routineNames = exerciseGateway.findRoutineNamesUsingExercise(input.id());
+    if (!routineNames.isEmpty()) {
+      LOGGER.warn("[DeleteExerciseUseCase] Cannot delete exercise {} - used in routines: {}", 
+          input.id(), routineNames);
+      throw new ExerciseInUseException(input.id(), routineNames);
+    }
     
     // Delete image from S3 if exists
     if (exercise.getImageUrl() != null) {

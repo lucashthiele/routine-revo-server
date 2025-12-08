@@ -6,7 +6,7 @@ public record RoutineFilter(
     UUID creatorId,
     UUID memberId,
     Boolean isExpired,
-    Boolean templatesOnly
+    RoutineType routineType
 ) {
 }
 

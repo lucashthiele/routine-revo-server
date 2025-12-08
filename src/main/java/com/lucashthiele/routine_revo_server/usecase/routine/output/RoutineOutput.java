@@ -1,6 +1,7 @@
 package com.lucashthiele.routine_revo_server.usecase.routine.output;
 
 import com.lucashthiele.routine_revo_server.domain.routine.Routine;
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,6 +16,8 @@ public record RoutineOutput(
     Boolean isExpired,
     UUID creatorId,
     UUID memberId,
+    RoutineType routineType,
+    UUID templateId,
     Integer itemCount,
     List<RoutineItemOutput> items,
     LocalDateTime createdAt,
@@ -48,6 +51,8 @@ public record RoutineOutput(
         isExpired,
         routine.getCreatorId(),
         routine.getMemberId(),
+        routine.getRoutineType(),
+        routine.getTemplateId(),
         itemOutputs.size(),
         itemOutputs,
         routine.getCreatedAt(),

@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.data.routine;
 
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.UserData;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -37,6 +38,13 @@ public class RoutineData {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id")
   private UserData member;
+  
+  @Enumerated(EnumType.STRING)
+  @Column(name = "routine_type", nullable = false, length = 20)
+  private RoutineType routineType = RoutineType.CUSTOM;
+  
+  @Column(name = "template_id")
+  private UUID templateId;
   
   @OneToMany(mappedBy = "routine", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @OrderBy("sequenceOrder ASC")

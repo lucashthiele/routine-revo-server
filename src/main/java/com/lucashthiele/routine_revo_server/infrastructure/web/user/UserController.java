@@ -21,10 +21,20 @@ import com.lucashthiele.routine_revo_server.usecase.user.output.AssignedRoutineO
 import com.lucashthiele.routine_revo_server.usecase.user.output.ListUsersOutput;
 import com.lucashthiele.routine_revo_server.usecase.user.output.UserOutput;
 import com.lucashthiele.routine_revo_server.usecase.routine.BulkAssignRoutinesUseCase;
+import com.lucashthiele.routine_revo_server.usecase.routine.BulkDeleteRoutinesUseCase;
+import com.lucashthiele.routine_revo_server.usecase.routine.BulkSyncRoutinesUseCase;
 import com.lucashthiele.routine_revo_server.usecase.routine.input.BulkAssignRoutinesInput;
+import com.lucashthiele.routine_revo_server.usecase.routine.input.BulkDeleteRoutinesInput;
+import com.lucashthiele.routine_revo_server.usecase.routine.input.BulkSyncRoutinesInput;
 import com.lucashthiele.routine_revo_server.usecase.routine.output.BulkAssignRoutinesOutput;
+import com.lucashthiele.routine_revo_server.usecase.routine.output.BulkDeleteRoutinesOutput;
+import com.lucashthiele.routine_revo_server.usecase.routine.output.BulkSyncRoutinesOutput;
 import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkAssignRoutinesRequest;
 import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkAssignRoutinesResponse;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkDeleteRoutinesRequest;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkDeleteRoutinesResponse;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkSyncRoutinesRequest;
+import com.lucashthiele.routine_revo_server.infrastructure.web.user.dto.BulkSyncRoutinesResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +58,8 @@ public class UserController {
   private final LinkCoachUseCase linkCoachUseCase;
   private final SearchMembersUseCase searchMembersUseCase;
   private final BulkAssignRoutinesUseCase bulkAssignRoutinesUseCase;
+  private final BulkDeleteRoutinesUseCase bulkDeleteRoutinesUseCase;
+  private final BulkSyncRoutinesUseCase bulkSyncRoutinesUseCase;
 
   public UserController(CreateUserUseCase createUserUseCase,
                         ListUsersUseCase listUsersUseCase,
@@ -56,7 +68,9 @@ public class UserController {
                         InactivateUserUseCase inactivateUserUseCase,
                         LinkCoachUseCase linkCoachUseCase,
                         SearchMembersUseCase searchMembersUseCase,
-                        BulkAssignRoutinesUseCase bulkAssignRoutinesUseCase) {
+                        BulkAssignRoutinesUseCase bulkAssignRoutinesUseCase,
+                        BulkDeleteRoutinesUseCase bulkDeleteRoutinesUseCase,
+                        BulkSyncRoutinesUseCase bulkSyncRoutinesUseCase) {
     this.createUserUseCase = createUserUseCase;
     this.listUsersUseCase = listUsersUseCase;
     this.getUserByIdUseCase = getUserByIdUseCase;
@@ -65,6 +79,8 @@ public class UserController {
     this.linkCoachUseCase = linkCoachUseCase;
     this.searchMembersUseCase = searchMembersUseCase;
     this.bulkAssignRoutinesUseCase = bulkAssignRoutinesUseCase;
+    this.bulkDeleteRoutinesUseCase = bulkDeleteRoutinesUseCase;
+    this.bulkSyncRoutinesUseCase = bulkSyncRoutinesUseCase;
   }
   
   @PostMapping
@@ -88,17 +104,19 @@ public class UserController {
       @RequestParam(required = false) String name,
       @RequestParam(required = false) Role role,
       @RequestParam(required = false) Status status,
+      @RequestParam(required = false) UUID coachId,
       @RequestParam(required = false) Integer page,
       @RequestParam(required = false) Integer size) {
     
     LOGGER.info("GET /api/v1/users - List users request received");
     
-    ListUsersRequest request = new ListUsersRequest(name, role, status, page, size);
+    ListUsersRequest request = new ListUsersRequest(name, role, status, coachId, page, size);
     
     ListUsersInput input = new ListUsersInput(
         request.name(),
         request.role(),
         request.status(),
+        request.coachId(),
         request.getPage(),
         request.getSize()
     );
@@ -219,6 +237,53 @@ public class UserController {
     );
     
     LOGGER.info("POST /api/v1/users/members/{}/routines/bulk - {}", memberId, output.message());
+    return ResponseEntity.ok(response);
+  }
+  
+  @DeleteMapping("/members/{memberId}/routines/bulk")
+  public ResponseEntity<BulkDeleteRoutinesResponse> bulkDeleteRoutines(
+      @PathVariable UUID memberId,
+      @Valid @RequestBody BulkDeleteRoutinesRequest request) {
+    LOGGER.info("DELETE /api/v1/users/members/{}/routines/bulk - Bulk delete routines request received", memberId);
+    
+    BulkDeleteRoutinesInput input = new BulkDeleteRoutinesInput(
+        memberId,
+        request.routineIds()
+    );
+    
+    BulkDeleteRoutinesOutput output = bulkDeleteRoutinesUseCase.execute(input);
+    
+    BulkDeleteRoutinesResponse response = new BulkDeleteRoutinesResponse(
+        output.deletedCount(),
+        output.message()
+    );
+    
+    LOGGER.info("DELETE /api/v1/users/members/{}/routines/bulk - {}", memberId, output.message());
+    return ResponseEntity.ok(response);
+  }
+  
+  @PutMapping("/members/{memberId}/routines/bulk")
+  public ResponseEntity<BulkSyncRoutinesResponse> bulkSyncRoutines(
+      @PathVariable UUID memberId,
+      @Valid @RequestBody BulkSyncRoutinesRequest request) {
+    LOGGER.info("PUT /api/v1/users/members/{}/routines/bulk - Bulk sync routines request received", memberId);
+    
+    BulkSyncRoutinesInput input = new BulkSyncRoutinesInput(
+        memberId,
+        request.routineIds(),
+        request.expirationDate()
+    );
+    
+    BulkSyncRoutinesOutput output = bulkSyncRoutinesUseCase.execute(input);
+    
+    BulkSyncRoutinesResponse response = new BulkSyncRoutinesResponse(
+        output.addedCount(),
+        output.removedCount(),
+        output.unchangedCount(),
+        output.message()
+    );
+    
+    LOGGER.info("PUT /api/v1/users/members/{}/routines/bulk - {}", memberId, output.message());
     return ResponseEntity.ok(response);
   }
   

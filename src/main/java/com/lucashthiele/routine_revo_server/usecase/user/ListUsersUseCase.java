@@ -40,7 +40,7 @@ public class ListUsersUseCase implements UseCaseInterface<ListUsersOutput, ListU
     LOGGER.info("[ListUsersUseCase] Listing users with filter: {}, page: {}, size: {}", 
         input, input.page(), input.size());
     
-    UserFilter filter = new UserFilter(input.name(), input.role(), input.status());
+    UserFilter filter = new UserFilter(input.name(), input.role(), input.status(), input.coachId());
     
     PaginatedResult<User> result = userGateway.findAll(filter, input.page(), input.size());
     

@@ -12,6 +12,8 @@ public class Routine {
   private final Instant expirationDate;
   private final UUID creatorId;
   private final UUID memberId;
+  private final RoutineType routineType;
+  private final UUID templateId;
   private final List<RoutineItem> items;
   private final LocalDateTime createdAt;
   private final LocalDateTime updatedAt;
@@ -23,6 +25,8 @@ public class Routine {
     this.expirationDate = builder.expirationDate;
     this.creatorId = builder.creatorId;
     this.memberId = builder.memberId;
+    this.routineType = builder.routineType;
+    this.templateId = builder.templateId;
     this.items = builder.items;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
@@ -52,6 +56,14 @@ public class Routine {
     return memberId;
   }
 
+  public RoutineType getRoutineType() {
+    return routineType;
+  }
+
+  public UUID getTemplateId() {
+    return templateId;
+  }
+
   public List<RoutineItem> getItems() {
     return items;
   }
@@ -75,6 +87,8 @@ public class Routine {
     private Instant expirationDate;
     private UUID creatorId;
     private UUID memberId;
+    private RoutineType routineType;
+    private UUID templateId;
     private List<RoutineItem> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -106,6 +120,16 @@ public class Routine {
 
     public Builder memberId(UUID memberId) {
       this.memberId = memberId;
+      return this;
+    }
+
+    public Builder routineType(RoutineType routineType) {
+      this.routineType = routineType;
+      return this;
+    }
+
+    public Builder templateId(UUID templateId) {
+      this.templateId = templateId;
       return this;
     }
 

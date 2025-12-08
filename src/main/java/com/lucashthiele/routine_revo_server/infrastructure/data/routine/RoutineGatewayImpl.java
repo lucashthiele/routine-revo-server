@@ -4,6 +4,7 @@ import com.lucashthiele.routine_revo_server.domain.routine.Routine;
 import com.lucashthiele.routine_revo_server.domain.routine.RoutineFilter;
 import com.lucashthiele.routine_revo_server.domain.shared.PaginatedResult;
 import com.lucashthiele.routine_revo_server.gateway.RoutineGateway;
+import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,10 +24,12 @@ public class RoutineGatewayImpl implements RoutineGateway {
   
   private final RoutineJpaRepository routineRepository;
   private final RoutineDataMapper routineDataMapper;
+  private final EntityManager entityManager;
   
-  public RoutineGatewayImpl(RoutineJpaRepository routineRepository, RoutineDataMapper routineDataMapper) {
+  public RoutineGatewayImpl(RoutineJpaRepository routineRepository, RoutineDataMapper routineDataMapper, EntityManager entityManager) {
     this.routineRepository = routineRepository;
     this.routineDataMapper = routineDataMapper;
+    this.entityManager = entityManager;
   }
   
   @Override
@@ -97,8 +100,10 @@ public class RoutineGatewayImpl implements RoutineGateway {
     RoutineData existingRoutine = routineRepository.findByIdWithItems(routine.getId())
         .orElseThrow(() -> new IllegalArgumentException("Routine not found with ID: " + routine.getId()));
     
-    // Clear existing items
+    // Clear existing items and flush to ensure DELETEs execute before INSERTs
+    // This prevents unique constraint violations on (routine_id, sequence_order)
     existingRoutine.clearItems();
+    entityManager.flush();
     
     // Update fields
     existingRoutine.setName(routine.getName());
@@ -147,17 +152,16 @@ public class RoutineGatewayImpl implements RoutineGateway {
   @Override
   @Transactional(readOnly = true)
   public PaginatedResult<Routine> findAll(RoutineFilter filter, int page, int size) {
-    LOGGER.debug("Fetching routines with filter - creatorId: {}, memberId: {}, isExpired: {}, templatesOnly: {}, page: {}, size: {}",
-        filter.creatorId(), filter.memberId(), filter.isExpired(), filter.templatesOnly(), page, size);
+    LOGGER.debug("Fetching routines with filter - creatorId: {}, memberId: {}, isExpired: {}, routineType: {}, page: {}, size: {}",
+        filter.creatorId(), filter.memberId(), filter.isExpired(), filter.routineType(), page, size);
     
     boolean checkExpired = filter.isExpired() != null;
     boolean isExpired = filter.isExpired() != null && filter.isExpired();
-    boolean templatesOnly = filter.templatesOnly() != null && filter.templatesOnly();
     
     Page<RoutineData> routinePage = routineRepository.findAllWithFilters(
         filter.creatorId(),
         filter.memberId(),
-        templatesOnly,
+        filter.routineType(),
         checkExpired,
         isExpired,
         Instant.now(),

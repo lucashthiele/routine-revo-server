@@ -44,7 +44,8 @@ public class SearchMembersUseCase implements UseCaseInterface<ListUsersOutput, S
     UserFilter filter = new UserFilter(
         input.name(),
         Role.MEMBER,
-        Status.ACTIVE
+        Status.ACTIVE,
+        null
     );
     
     int page = input.page() != null ? input.page() : 0;

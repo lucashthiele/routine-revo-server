@@ -1,5 +1,6 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.routine.dto;
 
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,8 @@ public record CreateRoutineRequest(
     UUID creatorId,
     
     UUID memberId,
+    
+    RoutineType routineType,
     
     @Valid
     List<RoutineItemRequest> items

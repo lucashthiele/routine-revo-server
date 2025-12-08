@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.usecase.routine;
 
 import com.lucashthiele.routine_revo_server.domain.routine.Routine;
 import com.lucashthiele.routine_revo_server.domain.routine.RoutineItem;
+import com.lucashthiele.routine_revo_server.domain.routine.RoutineType;
 import com.lucashthiele.routine_revo_server.gateway.RoutineGateway;
 import com.lucashthiele.routine_revo_server.usecase.UseCaseInterface;
 import com.lucashthiele.routine_revo_server.usecase.routine.input.CreateRoutineInput;
@@ -41,6 +42,11 @@ public class CreateRoutineUseCase implements UseCaseInterface<UUID, CreateRoutin
             .collect(Collectors.toList())
         : List.of();
     
+    // Determine routine type: if memberId is null and no explicit type, default to TEMPLATE
+    RoutineType routineType = input.routineType() != null 
+        ? input.routineType() 
+        : (input.memberId() == null ? RoutineType.TEMPLATE : RoutineType.CUSTOM);
+    
     // Create routine entity
     Routine routine = Routine.builder()
         .name(input.name())
@@ -48,6 +54,7 @@ public class CreateRoutineUseCase implements UseCaseInterface<UUID, CreateRoutin
         .expirationDate(input.expirationDate())
         .creatorId(input.creatorId())
         .memberId(input.memberId())
+        .routineType(routineType)
         .items(items)
         .build();
     

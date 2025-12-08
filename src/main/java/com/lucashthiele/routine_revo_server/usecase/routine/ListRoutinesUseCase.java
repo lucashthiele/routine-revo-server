@@ -26,14 +26,14 @@ public class ListRoutinesUseCase implements UseCaseInterface<ListRoutinesOutput,
   
   @Override
   public ListRoutinesOutput execute(ListRoutinesInput input) {
-    LOGGER.info("[ListRoutinesUseCase] Listing routines with creatorId: {}, memberId: {}, isExpired: {}, templatesOnly: {}, page: {}, size: {}",
-        input.creatorId(), input.memberId(), input.isExpired(), input.templatesOnly(), input.page(), input.size());
+    LOGGER.info("[ListRoutinesUseCase] Listing routines with creatorId: {}, memberId: {}, isExpired: {}, routineType: {}, page: {}, size: {}",
+        input.creatorId(), input.memberId(), input.isExpired(), input.routineType(), input.page(), input.size());
     
     RoutineFilter filter = new RoutineFilter(
         input.creatorId(),
         input.memberId(),
         input.isExpired(),
-        input.templatesOnly()
+        input.routineType()
     );
     
     PaginatedResult<Routine> result = routineGateway.findAll(filter, input.page(), input.size());

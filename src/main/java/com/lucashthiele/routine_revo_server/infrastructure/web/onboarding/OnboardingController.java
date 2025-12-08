@@ -1,10 +1,12 @@
 package com.lucashthiele.routine_revo_server.infrastructure.web.onboarding;
 
 import com.lucashthiele.routine_revo_server.infrastructure.web.onboarding.dto.ActivateAccountOnboardingRequest;
+import com.lucashthiele.routine_revo_server.infrastructure.web.onboarding.dto.ValidateOnboardingResponse;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.ActivateUserOnboardingUseCase;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.ValidateOnboardingUseCase;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.input.ActivateUserOnboardingInput;
 import com.lucashthiele.routine_revo_server.usecase.onboarding.input.ValidateOnboardingInput;
+import com.lucashthiele.routine_revo_server.usecase.onboarding.output.ValidateOnboardingOutput;
 import com.lucashthiele.routine_revo_server.usecase.passwordreset.exception.InvalidResetTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +29,17 @@ public class OnboardingController {
   }
 
   @PostMapping("/validate-onboarding")
-  public ResponseEntity<Void> validateResetToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
+  public ResponseEntity<ValidateOnboardingResponse> validateResetToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
     LOGGER.info("POST /api/v1/onboarding/validate-onboarding - Token validation request received");
 
     String token = extractTokenFromHeader(authorizationHeader);
 
     ValidateOnboardingInput input = new ValidateOnboardingInput(token);
 
-    validateOnboardingUseCase.execute(input);
+    ValidateOnboardingOutput output = validateOnboardingUseCase.execute(input);
 
     LOGGER.info("POST /api/v1/onboarding/validate-onboarding - Token validation successful");
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(new ValidateOnboardingResponse(output.isMember(), output.isCoach(), output.isAdmin()));
   }
   
   @PostMapping("/activate-account")

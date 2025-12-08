@@ -4,6 +4,8 @@ import com.lucashthiele.routine_revo_server.domain.exercise.Exercise;
 import com.lucashthiele.routine_revo_server.domain.exercise.ExerciseFilter;
 import com.lucashthiele.routine_revo_server.domain.shared.PaginatedResult;
 import com.lucashthiele.routine_revo_server.gateway.ExerciseGateway;
+import com.lucashthiele.routine_revo_server.infrastructure.data.routine.RoutineData;
+import com.lucashthiele.routine_revo_server.infrastructure.data.routine.RoutineJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,10 +25,15 @@ public class ExerciseGatewayImpl implements ExerciseGateway {
   
   private final ExerciseJpaRepository exerciseRepository;
   private final ExerciseDataMapper exerciseDataMapper;
+  private final RoutineJpaRepository routineRepository;
   
-  public ExerciseGatewayImpl(ExerciseJpaRepository exerciseRepository, ExerciseDataMapper exerciseDataMapper) {
+  public ExerciseGatewayImpl(
+      ExerciseJpaRepository exerciseRepository, 
+      ExerciseDataMapper exerciseDataMapper,
+      RoutineJpaRepository routineRepository) {
     this.exerciseRepository = exerciseRepository;
     this.exerciseDataMapper = exerciseDataMapper;
+    this.routineRepository = routineRepository;
   }
   
   @Override
@@ -93,6 +100,15 @@ public class ExerciseGatewayImpl implements ExerciseGateway {
     LOGGER.info("Deleting exercise with ID: {}", id);
     exerciseRepository.deleteById(id);
     LOGGER.info("Exercise deleted successfully with ID: {}", id);
+  }
+  
+  @Override
+  public List<String> findRoutineNamesUsingExercise(UUID exerciseId) {
+    LOGGER.debug("Checking if exercise {} is used in any routine", exerciseId);
+    List<RoutineData> routines = routineRepository.findAllByExerciseId(exerciseId);
+    return routines.stream()
+        .map(RoutineData::getName)
+        .toList();
   }
 }
 

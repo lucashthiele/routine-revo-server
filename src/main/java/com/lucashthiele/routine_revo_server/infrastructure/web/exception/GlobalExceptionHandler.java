@@ -188,28 +188,40 @@ public class GlobalExceptionHandler {
     
     LOGGER.error("Data integrity violation", ex);
     
-    String message = "Data integrity violation occurred.";
+    String message = "Ocorreu uma violação de integridade de dados.";
+    String error = "Erro de Integridade de Dados";
     
     // Check for common constraint violations
     if (ex.getMessage() != null) {
-      if (ex.getMessage().contains("unique constraint") || ex.getMessage().contains("duplicate key")) {
-        message = "A record with this information already exists.";
-      } else if (ex.getMessage().contains("not-null constraint")) {
-        message = "Required information is missing.";
-      } else if (ex.getMessage().contains("foreign key constraint")) {
-        message = "Referenced record does not exist.";
+      String exMessage = ex.getMessage();
+      
+      if (exMessage.contains("unique constraint") || exMessage.contains("duplicate key")) {
+        message = "Já existe um registro com essas informações.";
+      } else if (exMessage.contains("not-null constraint")) {
+        message = "Informação obrigatória não foi preenchida.";
+      } else if (exMessage.contains("foreign key constraint")) {
+        // Check for specific constraint: exercise referenced by routine_items
+        if (exMessage.contains("routine_items_exercise_id_fkey")) {
+          message = "Não é possível excluir este exercício pois ele está vinculado a uma ou mais rotinas. Remova o exercício das rotinas antes de excluí-lo.";
+          error = "Exercício em Uso";
+        } else if (exMessage.contains("delete") || exMessage.contains("update")) {
+          // Generic delete/update blocked by FK
+          message = "Não é possível realizar esta operação pois o registro está sendo referenciado por outros dados.";
+        } else {
+          message = "O registro referenciado não existe.";
+        }
       }
     }
     
     ErrorResponse errorResponse = new ErrorResponse(
         LocalDateTime.now(),
-        HttpStatus.BAD_REQUEST.value(),
-        "Data Integrity Violation",
+        HttpStatus.CONFLICT.value(),
+        error,
         message,
         request.getDescription(false).replace("uri=", "")
     );
     
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
   }
 
   @ExceptionHandler(InvalidCoachRoleException.class)
@@ -245,6 +257,24 @@ public class GlobalExceptionHandler {
     );
     
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+  }
+
+  @ExceptionHandler(com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseInUseException.class)
+  public ResponseEntity<ErrorResponse> handleExerciseInUseException(
+      com.lucashthiele.routine_revo_server.usecase.exercise.exception.ExerciseInUseException ex,
+      WebRequest request) {
+    
+    LOGGER.warn("Cannot delete exercise - in use by routines: {}", ex.getRoutineNames());
+    
+    ErrorResponse errorResponse = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.CONFLICT.value(),
+        "Exercício em Uso",
+        ex.getMessage(),
+        request.getDescription(false).replace("uri=", "")
+    );
+    
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
   }
 
   @ExceptionHandler(Exception.class)

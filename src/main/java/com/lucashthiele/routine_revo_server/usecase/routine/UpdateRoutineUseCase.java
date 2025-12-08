@@ -46,14 +46,16 @@ public class UpdateRoutineUseCase implements UseCaseInterface<RoutineOutput, Upd
             .collect(Collectors.toList())
         : List.of();
     
-    // Build updated routine
+    // Build updated routine (preserve immutable fields: creatorId, routineType, templateId)
     Routine updatedRoutine = Routine.builder()
         .id(input.id())
         .name(input.name())
         .description(input.description())
         .expirationDate(input.expirationDate())
-        .creatorId(existingRoutine.getCreatorId()) // Keep original creator
+        .creatorId(existingRoutine.getCreatorId())
         .memberId(input.memberId())
+        .routineType(existingRoutine.getRoutineType())
+        .templateId(existingRoutine.getTemplateId())
         .items(items)
         .createdAt(existingRoutine.getCreatedAt())
         .build();

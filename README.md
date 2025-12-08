@@ -131,7 +131,13 @@ This project uses Flyway for database version control.
 - `V1__create_users_table.sql` - Initial user table
 - `V2__remove_constraint_hashed_password.sql` - Remove password constraint
 - `V3__create_coach_id_users.sql` - Add coach relationships
-- `V4__seed_initial_data.sql` - Seed test data (local only)
+- `V4__create_exercises_table.sql` - Exercises table
+- `V5__create_routines_tables.sql` - Routines and routine items tables
+- `V6__alter_routine_items_load_to_double.sql` - Change load column type
+- `V7__create_workout_tables.sql` - Workout sessions tables
+- `V8__alter_adherence_rate_to_double.sql` - Change adherence rate column type
+- `V9__alter_load_used_to_double.sql` - Change load used column type
+- `V10__add_routine_type_and_template_id.sql` - Add routine types (TEMPLATE/CUSTOM) and template lineage tracking
 
 ### Creating New Migrations
 
@@ -191,6 +197,14 @@ PENDING | ACTIVE | INACTIVE
 ```
 CHEST | BACK | SHOULDERS | BICEPS | TRICEPS | LEGS | GLUTES | ABS | CARDIO | FULL_BODY
 ```
+
+#### RoutineType
+```
+TEMPLATE | CUSTOM
+```
+
+- **TEMPLATE**: Reusable routine templates that can be assigned to multiple members. When assigned, a copy is created.
+- **CUSTOM**: Member-specific routines, either created directly for a member or copied from a template.
 
 ---
 
@@ -560,7 +574,9 @@ Authorization: Bearer <auth_token>
 ---
 
 ### POST `/api/v1/users/members/{memberId}/routines/bulk`
-Bulk assign multiple routines to a member.
+Bulk assign multiple routines to a member by creating copies.
+
+This endpoint **creates copies** of the specified routines and assigns them to the member. The original routines (typically templates) remain unchanged and can be assigned to other members.
 
 **Headers:**
 ```
@@ -586,8 +602,8 @@ Authorization: Bearer <auth_token>
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| routineIds | UUID[] | Yes | At least one routine ID required |
-| expirationDate | ISO timestamp | No | Applied to all routines if provided |
+| routineIds | UUID[] | Yes | At least one routine ID required (typically TEMPLATEs) |
+| expirationDate | ISO timestamp | No | Applied to all new routine copies if provided |
 
 **Response (200 OK):**
 ```json
@@ -597,8 +613,124 @@ Authorization: Bearer <auth_token>
 }
 ```
 
+> **Note**: Each assigned routine creates a new CUSTOM routine for the member. If the source routines are TEMPLATEs, the new routines will have `templateId` set to reference their source.
+
 **Possible Errors:**
 - `400` - Validation failed (empty routine list)
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Member or routine not found
+
+---
+
+### DELETE `/api/v1/users/members/{memberId}/routines/bulk`
+Bulk delete multiple routines from a member.
+
+This endpoint deletes the specified routines that belong to the member. Only routines that are actually assigned to the member will be deleted; routines belonging to other members are skipped.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| memberId | UUID | Yes | Member's user ID |
+
+**Request Body:**
+```json
+{
+  "routineIds": [
+    "550e8400-e29b-41d4-a716-446655440100",
+    "550e8400-e29b-41d4-a716-446655440101",
+    "550e8400-e29b-41d4-a716-446655440102"
+  ]
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| routineIds | UUID[] | Yes | At least one routine ID required |
+
+**Response (200 OK):**
+```json
+{
+  "deletedCount": 3,
+  "message": "3 routine(s) deleted successfully from member"
+}
+```
+
+> **Note**: If a routine ID doesn't belong to the specified member, it will be skipped (not deleted) and won't count toward `deletedCount`. This allows safe bulk operations without worrying about ownership validation on the client side.
+
+**Possible Errors:**
+- `400` - Validation failed (empty routine list)
+- `401` - Authentication required
+- `403` - Access denied
+- `404` - Member or routine not found
+
+---
+
+### PUT `/api/v1/users/members/{memberId}/routines/bulk`
+Sync (update) a member's assigned routines using incremental sync.
+
+This endpoint synchronizes the member's routines with the provided list:
+- **Adds** routines from templates not yet assigned to the member
+- **Removes** routines whose templates are no longer in the incoming list
+- **Keeps** routines that are already assigned (preserving their IDs and workout history)
+
+This is useful for UI screens where users can select/deselect routines and save all changes at once.
+
+**Headers:**
+```
+Authorization: Bearer <auth_token>
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| memberId | UUID | Yes | Member's user ID |
+
+**Request Body:**
+```json
+{
+  "routineIds": [
+    "550e8400-e29b-41d4-a716-446655440100",
+    "550e8400-e29b-41d4-a716-446655440101"
+  ],
+  "expirationDate": "2025-06-01T00:00:00Z"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| routineIds | UUID[] | Yes | List of routine IDs (typically TEMPLATEs). Can be empty to remove all assigned routines |
+| expirationDate | ISO timestamp | No | Applied to newly created routine copies |
+
+**Response (200 OK):**
+```json
+{
+  "addedCount": 2,
+  "removedCount": 1,
+  "unchangedCount": 3,
+  "message": "Sync complete: 2 added, 1 removed, 3 unchanged"
+}
+```
+
+**Example Scenario:**
+
+Member currently has routines from templates A, B, C assigned.
+Request contains routines: B, C, D
+
+Result:
+- **Added**: D (new assignment)
+- **Removed**: A (no longer selected)
+- **Unchanged**: B, C (already assigned, IDs preserved)
+
+> **Note**: The sync is based on `templateId`. When you pass a TEMPLATE routine ID, the system checks if the member already has a CUSTOM routine derived from that template. This preserves workout history linked to existing routine IDs.
+
+**Possible Errors:**
+- `400` - Validation failed (null routine list)
 - `401` - Authentication required
 - `403` - Access denied
 - `404` - Member or routine not found
@@ -874,6 +1006,13 @@ Authorization: Bearer <auth_token>
 
 ## Routine Endpoints
 
+### Routine Types
+
+Routines are classified into two types:
+
+- **TEMPLATE**: Reusable routine templates created by coaches. Templates can be assigned to multiple members. When a template is assigned, a **copy** of the routine is created for that member, preserving the original template.
+- **CUSTOM**: Member-specific routines. These are either created directly for a specific member or are copies of templates that have been assigned to a member.
+
 ### GET `/api/v1/routines`
 List routines with pagination and filtering.
 
@@ -888,7 +1027,7 @@ Authorization: Bearer <auth_token>
 | creatorId | UUID | No | - | Filter by creator |
 | memberId | UUID | No | - | Filter by assigned member |
 | isExpired | boolean | No | - | Filter by expiration status |
-| templatesOnly | boolean | No | false | Only return routines without assigned members |
+| routineType | enum | No | - | Filter by routine type (TEMPLATE or CUSTOM) |
 | page | integer | No | 0 | Page number (0-indexed) |
 | size | integer | No | 20 | Page size |
 
@@ -904,6 +1043,8 @@ Authorization: Bearer <auth_token>
       "isExpired": false,
       "creatorId": "550e8400-e29b-41d4-a716-446655440001",
       "memberId": "550e8400-e29b-41d4-a716-446655440002",
+      "routineType": "CUSTOM",
+      "templateId": "550e8400-e29b-41d4-a716-446655440099",
       "itemCount": 8,
       "items": [
         {
@@ -929,6 +1070,8 @@ Authorization: Bearer <auth_token>
 }
 ```
 
+> **Note**: `templateId` is only populated for CUSTOM routines that were created from a template. For TEMPLATE routines and custom routines created directly, this field is `null`.
+
 **Possible Errors:**
 - `401` - Authentication required
 
@@ -949,7 +1092,8 @@ Authorization: Bearer <auth_token>
   "description": "Chest, shoulders, and triceps workout",
   "expirationDate": "2025-06-01T00:00:00Z",
   "creatorId": "550e8400-e29b-41d4-a716-446655440001",
-  "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "memberId": null,
+  "routineType": "TEMPLATE",
   "items": [
     {
       "exerciseId": "550e8400-e29b-41d4-a716-446655440010",
@@ -969,8 +1113,11 @@ Authorization: Bearer <auth_token>
 | description | string | No | - |
 | expirationDate | ISO timestamp | No | - |
 | creatorId | UUID | Yes | Not null |
-| memberId | UUID | No | - |
+| memberId | UUID | No | If null and routineType not specified, defaults to TEMPLATE |
+| routineType | enum | No | TEMPLATE or CUSTOM (defaults based on memberId) |
 | items | array | No | Valid items array |
+
+> **Note**: If `routineType` is not provided, it defaults to `TEMPLATE` when `memberId` is null, and `CUSTOM` when `memberId` is set.
 
 **Routine Item:**
 | Field | Type | Required | Validation |
@@ -1021,6 +1168,8 @@ Authorization: Bearer <auth_token>
   "isExpired": false,
   "creatorId": "550e8400-e29b-41d4-a716-446655440001",
   "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "routineType": "CUSTOM",
+  "templateId": "550e8400-e29b-41d4-a716-446655440099",
   "itemCount": 1,
   "items": [
     {
@@ -1089,12 +1238,16 @@ Authorization: Bearer <auth_token>
   "isExpired": false,
   "creatorId": "550e8400-e29b-41d4-a716-446655440001",
   "memberId": "550e8400-e29b-41d4-a716-446655440002",
+  "routineType": "CUSTOM",
+  "templateId": "550e8400-e29b-41d4-a716-446655440099",
   "itemCount": 1,
   "items": [...],
   "createdAt": "2025-01-15T10:30:00",
   "updatedAt": "2025-01-15T12:00:00"
 }
 ```
+
+> **Note**: `routineType` and `templateId` are immutable and cannot be changed via update.
 
 **Possible Errors:**
 - `400` - Validation failed
@@ -1127,7 +1280,9 @@ Authorization: Bearer <auth_token>
 ---
 
 ### POST `/api/v1/routines/{id}/associate`
-Associate a routine with a member.
+Assign a routine to a member by creating a copy.
+
+This endpoint **creates a copy** of the source routine and assigns it to the specified member. The original routine remains unchanged. If the source is a TEMPLATE, the new routine will reference it via `templateId`.
 
 **Headers:**
 ```
@@ -1137,7 +1292,7 @@ Authorization: Bearer <auth_token>
 **Path Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| id | UUID | Yes | Routine ID |
+| id | UUID | Yes | Source Routine ID (typically a TEMPLATE) |
 
 **Request Body:**
 ```json
@@ -1148,12 +1303,20 @@ Authorization: Bearer <auth_token>
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| memberId | UUID | Yes | Not null |
+| memberId | UUID | Yes | Not null, must be a MEMBER role user |
 
-**Response (200 OK):** Empty body
+**Response (201 Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440150",
+  "message": "Routine assigned successfully"
+}
+```
+
+> **Note**: The returned `id` is the newly created routine copy, not the original. The original routine remains unchanged and can be assigned to other members.
 
 **Possible Errors:**
-- `400` - Validation failed
+- `400` - Validation failed, user is not a MEMBER
 - `401` - Authentication required
 - `403` - Access denied
 - `404` - Routine or member not found
@@ -1180,6 +1343,8 @@ Authorization: Bearer <auth_token>
     "expirationDate": "2025-06-01T00:00:00Z",
     "isExpired": false,
     "creatorId": "550e8400-e29b-41d4-a716-446655440001",
+    "routineType": "CUSTOM",
+    "templateId": "550e8400-e29b-41d4-a716-446655440099",
     "items": [
       {
         "id": "550e8400-e29b-41d4-a716-446655440200",
@@ -1198,6 +1363,8 @@ Authorization: Bearer <auth_token>
   }
 ]
 ```
+
+> **Note**: Member routines are typically CUSTOM routines that were assigned from TEMPLATEs. The `templateId` field shows which template the routine was copied from.
 
 **Possible Errors:**
 - `401` - Authentication required
@@ -1369,17 +1536,35 @@ Authorization: Bearer <reset_token>
 ## Onboarding Endpoints
 
 ### POST `/api/v1/onboarding/validate-onboarding`
-Validate an onboarding token.
+Validate an onboarding token and get user role information.
 
 **Headers:**
 ```
 Authorization: Bearer <onboarding_token>
 ```
 
-**Response (200 OK):** Empty body
+**Response (200 OK):**
+```json
+{
+  "isMember": true,
+  "isCoach": false,
+  "isAdmin": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| isMember | boolean | True if user has MEMBER role |
+| isCoach | boolean | True if user has COACH role |
+| isAdmin | boolean | True if user has ADMIN role |
+
+> **Usage**: Use this response to determine the user experience after activation:
+> - `isMember: true` → Show message that the user can now use the mobile app
+> - `isCoach: true` or `isAdmin: true` → Redirect to the web app
 
 **Possible Errors:**
 - `400` - Invalid or expired token
+- `404` - User not found with PENDING status
 
 ---
 
