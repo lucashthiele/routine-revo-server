@@ -82,18 +82,27 @@ public class LogWorkoutUseCase implements UseCaseInterface<LogWorkoutOutput, Log
   }
   
   private Double calculateAndUpdateAdherence(User member) {
-    // Calculate workouts in the last 30 days
-    Instant since = Instant.now().minus(ADHERENCE_WINDOW_DAYS, ChronoUnit.DAYS);
-    long totalWorkouts = workoutGateway.countWorkoutsByMemberSince(member.getId(), since);
+    Instant now = Instant.now();
+    
+    // Determine the effective start of the adherence window
+    // Use the later of: (30 days ago) OR (user creation date)
+    Instant windowStart = now.minus(ADHERENCE_WINDOW_DAYS, ChronoUnit.DAYS);
+    Instant effectiveStart = member.getCreatedAt() != null && member.getCreatedAt().isAfter(windowStart)
+        ? member.getCreatedAt()
+        : windowStart;
+    
+    // Count workouts since the effective start
+    long totalWorkouts = workoutGateway.countWorkoutsByMemberSince(member.getId(), effectiveStart);
     
     // Get target per week (use user's setting or default)
     int targetPerWeek = member.getWorkoutPerWeek() != null 
         ? member.getWorkoutPerWeek() 
         : DEFAULT_TARGET_WORKOUTS_PER_WEEK;
     
-    // Calculate expected workouts in the period (approx 4.3 weeks in 30 days)
-    double weeksInPeriod = ADHERENCE_WINDOW_DAYS / 7.0;
-    double expectedWorkouts = targetPerWeek * weeksInPeriod;
+    // Calculate pro-rated expected workouts based on actual days active
+    long daysActive = ChronoUnit.DAYS.between(effectiveStart, now) + 1; // +1 to include today
+    double weeksActive = daysActive / 7.0;
+    double expectedWorkouts = targetPerWeek * weeksActive;
     
     // Calculate adherence rate (capped at 100%)
     double adherenceRate = expectedWorkouts > 0 
@@ -103,8 +112,8 @@ public class LogWorkoutUseCase implements UseCaseInterface<LogWorkoutOutput, Log
     // Round to 2 decimal places
     adherenceRate = Math.round(adherenceRate * 100.0) / 100.0;
     
-    LOGGER.debug("[LogWorkoutUseCase] Adherence calculation: {} workouts / {} expected = {}%",
-        totalWorkouts, expectedWorkouts, adherenceRate);
+    LOGGER.debug("[LogWorkoutUseCase] Adherence calculation: {} workouts / {} expected ({} days active) = {}%",
+        totalWorkouts, expectedWorkouts, daysActive, adherenceRate);
     
     // Update user with new adherence rate
     User updatedMember = User.builder()
@@ -117,6 +126,7 @@ public class LogWorkoutUseCase implements UseCaseInterface<LogWorkoutOutput, Log
         .coachId(member.getCoachId())
         .workoutPerWeek(member.getWorkoutPerWeek())
         .adherenceRate(adherenceRate)
+        .createdAt(member.getCreatedAt())
         .build();
     
     userGateway.update(updatedMember);

@@ -19,7 +19,7 @@ public interface RoutineJpaRepository extends JpaRepository<RoutineData, UUID> {
   @Query("SELECT r FROM RoutineData r LEFT JOIN FETCH r.items WHERE r.id = :id")
   Optional<RoutineData> findByIdWithItems(@Param("id") UUID id);
   
-  @Query("SELECT r FROM RoutineData r WHERE r.member.id = :memberId ORDER BY r.createdAt DESC")
+  @Query("SELECT DISTINCT r FROM RoutineData r LEFT JOIN FETCH r.items WHERE r.member.id = :memberId ORDER BY r.createdAt DESC")
   List<RoutineData> findAllByMemberId(@Param("memberId") UUID memberId);
   
   @Query(value = "SELECT r FROM RoutineData r " +

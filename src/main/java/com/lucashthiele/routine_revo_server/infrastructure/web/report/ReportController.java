@@ -37,7 +37,9 @@ public class ReportController {
             item.workoutSessionId(),
             item.date(),
             item.routineName(),
-            item.durationMinutes()
+            item.durationMinutes(),
+            item.completed(),
+            item.partiallyCompleted()
         ))
         .collect(Collectors.toList());
     

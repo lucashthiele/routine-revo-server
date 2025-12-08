@@ -7,7 +7,9 @@ public record WorkoutHistoryItemResponse(
     UUID workoutSessionId,
     Instant date,
     String routineName,
-    Long durationMinutes
+    Long durationMinutes,
+    boolean completed,
+    boolean partiallyCompleted
 ) {
 }
 

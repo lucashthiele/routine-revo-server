@@ -21,12 +21,14 @@ public interface WorkoutJpaRepository extends JpaRepository<WorkoutSessionData, 
   
   @Query("SELECT ws FROM WorkoutSessionData ws " +
          "LEFT JOIN FETCH ws.items " +
+         "LEFT JOIN FETCH ws.routine " +
          "WHERE ws.member.id = :memberId " +
          "ORDER BY ws.startedAt DESC")
   List<WorkoutSessionData> findAllByMemberId(@Param("memberId") UUID memberId);
   
   @Query("SELECT ws FROM WorkoutSessionData ws " +
          "LEFT JOIN FETCH ws.items " +
+         "LEFT JOIN FETCH ws.routine " +
          "WHERE ws.member.id = :memberId " +
          "ORDER BY ws.endedAt DESC")
   List<WorkoutSessionData> findRecentByMemberId(@Param("memberId") UUID memberId, Pageable pageable);

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -92,11 +93,45 @@ public class GetPerformanceReportUseCase implements UseCaseInterface<Performance
       durationMinutes = Duration.between(session.getStartedAt(), session.getEndedAt()).toMinutes();
     }
     
+    // Determine completion status based on exercises done vs expected
+    boolean completed = false;
+    boolean partiallyCompleted = false;
+    
+    if (session.getEndedAt() != null) {
+      // Workout was finished - check if all exercises were completed
+      if (routine != null && routine.getItems() != null && !routine.getItems().isEmpty()) {
+        // Get expected exercise IDs from routine
+        Set<UUID> expectedExerciseIds = routine.getItems().stream()
+            .map(item -> item.getExerciseId())
+            .collect(Collectors.toSet());
+        
+        // Get done exercise IDs from workout session
+        Set<UUID> doneExerciseIds = session.getItems() != null
+            ? session.getItems().stream()
+                .map(item -> item.getExerciseId())
+                .collect(Collectors.toSet())
+            : Set.of();
+        
+        // Check if all expected exercises were done
+        boolean allExercisesDone = doneExerciseIds.containsAll(expectedExerciseIds);
+        boolean someExercisesDone = !doneExerciseIds.isEmpty() && 
+            expectedExerciseIds.stream().anyMatch(doneExerciseIds::contains);
+        
+        completed = allExercisesDone;
+        partiallyCompleted = !allExercisesDone && someExercisesDone;
+      } else {
+        // No routine or no items - fallback: if ended, consider completed
+        completed = true;
+      }
+    }
+    
     return new WorkoutHistoryItem(
         session.getId(),
-        session.getEndedAt(),
+        session.getEndedAt() != null ? session.getEndedAt() : session.getStartedAt(),
         routineName,
-        durationMinutes
+        durationMinutes,
+        completed,
+        partiallyCompleted
     );
   }
 }

@@ -2,6 +2,7 @@ package com.lucashthiele.routine_revo_server.domain.user;
 
 import lombok.Getter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -15,6 +16,7 @@ public class User {
   private final UUID coachId;
   private final Integer workoutPerWeek;
   private final Double adherenceRate;
+  private final Instant createdAt;
   
   
   private User(Builder builder) {
@@ -27,6 +29,7 @@ public class User {
     this.coachId = builder.coachId;
     this.workoutPerWeek = builder.workoutPerWeek;
     this.adherenceRate = builder.adherenceRate;
+    this.createdAt = builder.createdAt;
   }
 
   public static Builder builder() {
@@ -43,6 +46,7 @@ public class User {
     private UUID coachId;
     private Integer workoutPerWeek;
     private Double adherenceRate;
+    private Instant createdAt;
 
     public Builder id(UUID id) {
       this.id = id;
@@ -84,6 +88,11 @@ public class User {
     
     public Builder adherenceRate(Double adherenceRate) {
       this.adherenceRate = adherenceRate;
+      return this;
+    }
+    
+    public Builder createdAt(Instant createdAt) {
+      this.createdAt = createdAt;
       return this;
     }
     

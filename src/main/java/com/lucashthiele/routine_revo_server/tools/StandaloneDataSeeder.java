@@ -418,12 +418,15 @@ public class StandaloneDataSeeder {
       System.out.println("  ✓ Created coach user: sarah.coach@routinerevo.com");
       
       // Create Member Users
+      // Members with workout history use 60-day-old created_at for realistic adherence calculation
+      LocalDateTime sixtyDaysAgo = LocalDateTime.now().minusDays(60);
+      
       insertUser(conn, ALICE_MEMBER_ID, "Alice Member", "alice.member@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 3);
+          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 3, sixtyDaysAgo);
       System.out.println("  ✓ Created member user: alice.member@routinerevo.com");
       
       insertUser(conn, BOB_MEMBER_ID, "Bob Member", "bob.member@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 4);
+          hashPassword("member123"), "MEMBER", "ACTIVE", JOHN_COACH_ID, 4, sixtyDaysAgo);
       System.out.println("  ✓ Created member user: bob.member@routinerevo.com");
       
       insertUser(conn, CHARLIE_MEMBER_ID, "Charlie Member", "charlie.member@routinerevo.com",
@@ -448,16 +451,17 @@ public class StandaloneDataSeeder {
       System.out.println("  ✓ Created unassigned member: grace.oliveira@routinerevo.com");
       
       // Membros brasileiros (clientes em português, gerenciados diretamente pelo admin)
+      // These members have workout history, so use 60-day-old created_at
       insertUser(conn, JOAO_MEMBER_ID, "João Silva", "joao.silva@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", null, 4);
+          hashPassword("member123"), "MEMBER", "ACTIVE", null, 4, sixtyDaysAgo);
       System.out.println("  ✓ Created unassigned member: joao.silva@routinerevo.com");
       
       insertUser(conn, MARIA_MEMBER_ID, "Maria Santos", "maria.santos@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", null, 3);
+          hashPassword("member123"), "MEMBER", "ACTIVE", null, 3, sixtyDaysAgo);
       System.out.println("  ✓ Created unassigned member: maria.santos@routinerevo.com");
       
       insertUser(conn, PEDRO_MEMBER_ID, "Pedro Ferreira", "pedro.ferreira@routinerevo.com",
-          hashPassword("member123"), "MEMBER", "ACTIVE", null, 5);
+          hashPassword("member123"), "MEMBER", "ACTIVE", null, 5, sixtyDaysAgo);
       System.out.println("  ✓ Created unassigned member: pedro.ferreira@routinerevo.com");
       
       insertUser(conn, ANA_MEMBER_ID, "Ana Costa", "ana.costa@routinerevo.com",
@@ -512,6 +516,22 @@ public class StandaloneDataSeeder {
       UUID coachId,
       Integer workoutPerWeek
   ) throws SQLException {
+    // Default: create user "now" (for admins, coaches, users without workout history)
+    insertUser(conn, id, name, email, hashedPassword, role, status, coachId, workoutPerWeek, LocalDateTime.now());
+  }
+  
+  private static void insertUser(
+      Connection conn,
+      UUID id,
+      String name,
+      String email,
+      String hashedPassword,
+      String role,
+      String status,
+      UUID coachId,
+      Integer workoutPerWeek,
+      LocalDateTime createdAt
+  ) throws SQLException {
     String sql = "INSERT INTO users (id, name, email, hashed_password, role, status, coach_id, workout_per_week, created_at, updated_at) " +
                  "VALUES (?, ?, ?, ?, ?::user_role, ?::user_status, ?, ?, ?, ?)";
     
@@ -530,7 +550,7 @@ public class StandaloneDataSeeder {
       } else {
         stmt.setNull(8, java.sql.Types.INTEGER);
       }
-      stmt.setTimestamp(9, Timestamp.valueOf(now));
+      stmt.setTimestamp(9, Timestamp.valueOf(createdAt));
       stmt.setTimestamp(10, Timestamp.valueOf(now));
       
       stmt.executeUpdate();
@@ -1626,6 +1646,10 @@ public class StandaloneDataSeeder {
       // ==========================================
       // Update adherence rates for members
       // ==========================================
+      // Note: Adherence is pro-rated based on user's created_at date.
+      // Since these members were created 60 days ago (> 30 day window),
+      // the full 30-day window is used for calculation.
+      // Formula: (totalWorkouts / (targetPerWeek * 4.29)) * 100
       System.out.println("  Calculating adherence rates...");
       
       // Alice: 7 workouts in 30 days, target is 3/week (~12.9 expected)

@@ -7,6 +7,8 @@ import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.RoleD
 import com.lucashthiele.routine_revo_server.infrastructure.data.user.enums.StatusData;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+
 @Component
 public class UserDataMapper {
   
@@ -23,6 +25,9 @@ public class UserDataMapper {
         .coachId(userData.getCoach() != null ? userData.getCoach().getId() : null)
         .workoutPerWeek(userData.getWorkoutPerWeek())
         .adherenceRate(userData.getAdherenceRate())
+        .createdAt(userData.getCreatedAt() != null 
+            ? userData.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant() 
+            : null)
         .build();
   }
   
